@@ -31,11 +31,28 @@ patches-own [
 ; Observer context
 to setup
   ca
+  reset-ticks
   import-pcolors "map2.png"
   init-patches
   import-pcolors "map1.png"
   init-globals
   init-fish
+end
+
+; Observer context
+to move
+  ifelse day < 170 [
+    set day day + 1
+    color-patches
+    migrate
+  ][
+    set day 0
+    set year year + 1
+    stop ; eventually delete this
+    ; kill
+    ; spawn
+    ; move patches
+  ]
 end
 
 
@@ -53,6 +70,7 @@ to init-patches
   set-states
 end
 
+
 ; Observer context
 to set-states
   ask patches [ set in-boundary? false ]
@@ -68,6 +86,7 @@ to set-states
   ask patches with [state = "ME" or state = "NH" or state = "RI" or state = "MA" or state = "NY" or state = "CT" or state = "NJ"] [ set in-boundary? true ]
 end
 
+
 ; Observer context
 to init-globals
   set day 0
@@ -77,6 +96,7 @@ to init-globals
   set distribution-variability 0.2
 end
 
+
 ; Observer context
 to init-fish
   let piw patches-in-window
@@ -85,53 +105,53 @@ to init-fish
 
     let plus-minus random 2
     ifelse plus-minus = 0 [
-      set zero-to-four floor ((0.13 + random-float 0.06) * (distribution + (distribution * random-float distribution-variability)))
+      set zero-to-four floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability))))
     ][
-      set zero-to-four floor ((0.13 + random-float 0.06) * (distribution + (distribution * random-float distribution-variability * -1)))
+      set zero-to-four floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set five-to-nine floor ((0.13 + random-float 0.06) * (distribution + (distribution * random-float distribution-variability)))
+      set five-to-nine floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability))))
     ][
-      set five-to-nine floor ((0.13 + random-float 0.06) * (distribution + (distribution * random-float distribution-variability * -1)))
+      set five-to-nine floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set ten-to-fourteen floor ((0.13 + random-float 0.06) * (distribution + (distribution * random-float distribution-variability)))
+      set ten-to-fourteen floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability))))
     ][
-      set ten-to-fourteen floor ((0.13 + random-float 0.06) * (distribution + (distribution * random-float distribution-variability * -1)))
+      set ten-to-fourteen floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set fifteen-to-nineteen floor ((0.13 + random-float 0.06) * (distribution + (distribution * random-float distribution-variability)))
+      set fifteen-to-nineteen floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability))))
     ][
-      set fifteen-to-nineteen floor ((0.13 + random-float 0.06) * (distribution + (distribution * random-float distribution-variability * -1)))
+      set fifteen-to-nineteen floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set twenty-to-twenty-four floor ((0.13 + random-float 0.06) * (distribution + (distribution * random-float distribution-variability)))
+      set twenty-to-twenty-four floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability))))
     ][
-      set twenty-to-twenty-four floor ((0.13 + random-float 0.06) * (distribution + (distribution * random-float distribution-variability * -1)))
+      set twenty-to-twenty-four floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set twenty-five-to-twenty-nine floor ((0.13 + random-float 0.06) * (distribution + (distribution * random-float distribution-variability)))
+      set twenty-five-to-twenty-nine floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability))))
     ][
-      set twenty-five-to-twenty-nine floor ((0.13 + random-float 0.06) * (distribution + (distribution * random-float distribution-variability * -1)))
+      set twenty-five-to-twenty-nine floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability * -1))))
     ]
   ]
 end
 
-
-to update-window
-
-
-end
+;; Observer context
+;to update-window
+;  set min-window min-window + 4
+;  set max-window max-window + 4
+;end
 
 ; Observer context
 to age-up
@@ -165,6 +185,40 @@ to spawn
 
 end
 
+
+; Observer context
+to migrate
+  ask patches [
+    let good-neighbors neighbors with [pxcor >= [pxcor] of myself]
+    ask good-neighbors [
+      let taken-zero-to-four (random-float 0.2) * [zero-to-four] of myself
+      let taken-five-to-nine (random-float 0.2) * [five-to-nine] of myself
+      let taken-ten-to-fourteen (random-float 0.2) * [ten-to-fourteen] of myself
+      let taken-fifteen-to-nineteen (random-float 0.2) * [fifteen-to-nineteen] of myself
+      let taken-twenty-to-twenty-four (random-float 0.2) * [twenty-to-twenty-four] of myself
+      let taken-twenty-five-to-twenty-nine (random-float 0.2) * [twenty-five-to-twenty-nine] of myself
+      set zero-to-four zero-to-four + taken-zero-to-four
+      ask myself [set zero-to-four zero-to-four - taken-zero-to-four]
+      set five-to-nine five-to-nine + taken-five-to-nine
+      ask myself [set five-to-nine five-to-nine - taken-five-to-nine]
+      set ten-to-fourteen ten-to-fourteen + taken-ten-to-fourteen
+      ask myself [set ten-to-fourteen ten-to-fourteen - taken-ten-to-fourteen]
+      set fifteen-to-nineteen fifteen-to-nineteen + taken-fifteen-to-nineteen
+      ask myself [set fifteen-to-nineteen fifteen-to-nineteen - taken-fifteen-to-nineteen]
+      set twenty-to-twenty-four twenty-to-twenty-four + taken-twenty-to-twenty-four
+      ask myself [set twenty-to-twenty-four twenty-to-twenty-four - taken-twenty-to-twenty-four]
+      set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + taken-twenty-five-to-twenty-nine
+      ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - taken-twenty-five-to-twenty-nine]
+    ]
+  ]
+end
+
+; Observer context
+to color-patches
+  ask patches with [in-boundary? = true] [
+    set pcolor 97.9 + fish-on-patch
+  ]
+end
 
 ; Patch context
 to-report fish-on-patch
@@ -213,8 +267,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-1
-1
+0
+0
 1
 0
 832
@@ -252,16 +306,44 @@ approx-init-pop
 approx-init-pop
 0
 10000000
-1.0E7
+5140000.0
 10000
 1
 NIL
 HORIZONTAL
 
+BUTTON
+28
+145
+93
+178
+NIL
+move
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
 MONITOR
-1080
+1082
+87
+1139
+132
+NIL
+day
+17
+1
+11
+
+MONITOR
+1084
 29
-1194
+1155
 74
 NIL
 total-fish
