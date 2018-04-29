@@ -3,49 +3,143 @@
 ; CSCI 0390
 ; May 14, 2018
 
-breed [ boats boat ]
+; interface
+; approx-init-pop
 
+globals [
+  day
+  year
+  min-window
+  max-window
+  distribution-variability
+]
+
+breed [ boats boat ]
 
 patches-own [
   state
+  in-boundary?
   zero-to-four
   five-to-nine
   ten-to-fourteen
   fifteen-to-nineteen
   twenty-to-twenty-four
-  twenty-five-to-thirty
+  twenty-five-to-twenty-nine
 ]
 
 
+; Observer context
 to setup
   ca
   import-pcolors "map2.png"
-  set-states
-  ; import-pcolors "map1.png"
+  init-patches
+  import-pcolors "map1.png"
+  init-globals
+  init-fish
 end
 
 
 ; note: need to deal with mixed-color patches. resampling
+; Observer context
+to init-patches
+  ask patches [
+    set zero-to-four 0
+    set five-to-nine 0
+    set ten-to-fourteen 0
+    set fifteen-to-nineteen 0
+    set twenty-to-twenty-four 0
+    set twenty-five-to-twenty-nine 0
+  ]
+  set-states
+end
+
+; Observer context
 to set-states
+  ask patches [ set in-boundary? false ]
   ask patches with [pcolor = 5.6] [set state "land"]
   ask patches with [pcolor = 97.9] [set state "water"]
   ask patches with [pcolor = 26.9] [set state "ME"]
   ask patches with [pcolor = 67.8 ] [set state "NH"]
-  ask patches with [pcolor = 63.2][set state "RI"]
+  ask patches with [pcolor = 63.2] [set state "RI"]
   ask patches with [pcolor = 15.7] [set state "MA"]
   ask patches with [pcolor = 45.6 ] [set state "NY"]
-  ask patches with [pcolor = 114.2][set state "CT"]
-  ask patches with [pcolor = 15.6][set state "NJ"]
+  ask patches with [pcolor = 114.2] [set state "CT"]
+  ask patches with [pcolor = 15.6] [set state "NJ"]
+  ask patches with [state = "ME" or state = "NH" or state = "RI" or state = "MA" or state = "NY" or state = "CT" or state = "NJ"] [ set in-boundary? true ]
+end
+
+; Observer context
+to init-globals
+  set day 0
+  set year 0
+  set min-window 0
+  set max-window 40
+  set distribution-variability 0.2
+end
+
+; Observer context
+to init-fish
+  let piw patches-in-window
+  let distribution floor (approx-init-pop / piw)
+  ask patches with [pxcor >= min-window and pxcor <= max-window and in-boundary? = true] [
+
+    let plus-minus random 2
+    ifelse plus-minus = 0 [
+      set zero-to-four floor ((0.12 + random-float 0.07) * (distribution + (distribution * random-float distribution-variability)))
+    ][
+      set zero-to-four floor ((0.12 + random-float 0.07) * (distribution + (distribution * random-float distribution-variability * -1)))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set five-to-nine floor ((0.12 + random-float 0.07) * (distribution + (distribution * random-float distribution-variability)))
+    ][
+      set five-to-nine floor ((0.12 + random-float 0.07) * (distribution + (distribution * random-float distribution-variability * -1)))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set ten-to-fourteen floor ((0.12 + random-float 0.07) * (distribution + (distribution * random-float distribution-variability)))
+    ][
+      set ten-to-fourteen floor ((0.12 + random-float 0.07) * (distribution + (distribution * random-float distribution-variability * -1)))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set fifteen-to-nineteen floor ((0.12 + random-float 0.07) * (distribution + (distribution * random-float distribution-variability)))
+    ][
+      set fifteen-to-nineteen floor ((0.12 + random-float 0.07) * (distribution + (distribution * random-float distribution-variability * -1)))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set twenty-to-twenty-four floor ((0.12 + random-float 0.07) * (distribution + (distribution * random-float distribution-variability)))
+    ][
+      set twenty-to-twenty-four floor ((0.12 + random-float 0.07) * (distribution + (distribution * random-float distribution-variability * -1)))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set twenty-five-to-twenty-nine floor ((0.1 + random-float 0.07) * (distribution + (distribution * random-float distribution-variability)))
+    ][
+      set twenty-five-to-twenty-nine floor ((0.12 + random-float 0.07) * (distribution + (distribution * random-float distribution-variability * -1)))
+    ]
+  ]
 end
 
 
+to update-window
 
+
+end
+
+; Observer context
 to age-up
   ask patches [
     ; the thirty year old fish die
-    set twenty-five-to-thirty ((floor (twenty-five-to-thirty / 5)) * 4)
-    ; the twenty-four year old fish age up to the twenty-five-to-thirty age group
-    set twenty-five-to-thirty (twenty-five-to-thirty + ((floor (twenty-to-twenty-four / 5)) * 4))
+    set twenty-five-to-twenty-nine ((floor (twenty-five-to-twenty-nine / 5)) * 4)
+    ; the twenty-four year old fish age up to the twenty-five-to-twenty-nine age group
+    set twenty-five-to-twenty-nine (twenty-five-to-twenty-nine + ((floor (twenty-to-twenty-four / 5)) * 4))
     set twenty-to-twenty-four ((floor (twenty-to-twenty-four / 5)) * 4)
     ; the nineteen year old fish age up to the twenty-to-twenty-four age group
     set twenty-to-twenty-four (twenty-to-twenty-four + ((floor (fifteen-to-nineteen / 5)) * 4))
@@ -64,6 +158,7 @@ to age-up
   ]
 end
 
+
 ; Patch context
 to spawn
   ; the female
@@ -71,115 +166,38 @@ to spawn
 end
 
 
+; Patch context
+to-report fish-on-patch
+  let total 0
+  set total total +
+    zero-to-four +
+    five-to-nine +
+    ten-to-fourteen +
+    fifteen-to-nineteen +
+    twenty-to-twenty-four +
+    twenty-five-to-twenty-nine
+  report total
+end
 
 
+; Observer context
+to-report total-fish
+  let total 0
+  ask patches with [in-boundary? = true][
+    set total total +
+    zero-to-four +
+    five-to-nine +
+    ten-to-fourteen +
+    fifteen-to-nineteen +
+    twenty-to-twenty-four +
+    twenty-five-to-twenty-nine
+  ]
+  report total
+end
 
-;  zero
-;  one
-;  two
-;  three
-;  four
-;  five
-;  six
-;  seven
-;  eight
-;  nine
-;  ten
-;  eleven
-;  twelve
-;  thirteen
-;  fourteen
-;  fifteen
-;  sixteen
-;  seventeen
-;  eighteen
-;  nineteen
-;  twenty
-;  twenty-one
-;  twenty-two
-;  twenty-three
-;  twenty-four
-;  twenty-five
-;  twenty-six
-;  twenty-seven
-;  twenty-eight
-;  twenty-nine
-;  thirty
-
-
-;to age-up
-;  ask patches [
-;    set thirty twenty-nine
-;    set twenty-nine twenty-eight
-;    set twenty-eight twenty-seven
-;    set twenty-seven twenty-six
-;    set twenty-six twenty-five
-;    set twenty-five twenty-four
-;    set twenty-four twenty-three
-;    set twenty-three twenty-two
-;    set twenty-two twenty-one
-;    set twenty-one twenty
-;    set twenty nineteen
-;    set nineteen eighteen
-;    set eighteen seventeen
-;    set seventeen sixteen
-;    set sixteen fifteen
-;    set fifteen fourteen
-;    set fourteen thirteen
-;    set thirteen twelve
-;    set twelve eleven
-;    set eleven ten
-;    set ten nine
-;    set nine eight
-;    set eight seven
-;    set seven six
-;    set six five
-;    set five four
-;    set four three
-;    set three two
-;    set two one
-;    set one zero
-;  ]
-;end
-;
-;
-;to-report fish-population
-;  let total 0
-;  ask patches [
-;    set total total +
-;    zero +
-;    one +
-;    two +
-;    three +
-;    four +
-;    five +
-;    six +
-;    seven +
-;    eight +
-;    nine +
-;    ten +
-;    eleven +
-;    twelve +
-;    thirteen +
-;    fourteen +
-;    fifteen +
-;    sixteen +
-;    seventeen +
-;    eighteen +
-;    nineteen +
-;    twenty +
-;    twenty-one +
-;    twenty-two +
-;    twenty-three +
-;    twenty-four +
-;    twenty-five +
-;    twenty-six +
-;    twenty-seven +
-;    twenty-eight +
-;    twenty-nine +
-;    thirty
-;  ]
-;end
+to-report patches-in-window
+  report count patches with [pxcor >= min-window and pxcor <= max-window and in-boundary? = true]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -224,6 +242,32 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+25
+344
+221
+377
+approx-init-pop
+approx-init-pop
+0
+10000000
+1.0E7
+10000
+1
+NIL
+HORIZONTAL
+
+MONITOR
+1080
+29
+1194
+74
+NIL
+total-fish
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
