@@ -19,7 +19,13 @@ patches-own [
 
 to setup
   ca
+  import-pcolors "map2.png"
+  set-state
+  ask patches with [pcolor = grey] [set state "land"]
+  ask patches with [pcolor = orange] [set state "maine"]
 end
+
+
 
 
 to age-up
@@ -48,7 +54,7 @@ end
 
 ; Patch context
 to spawn
-  ;
+  ; the female
 
 end
 
@@ -166,11 +172,11 @@ end
 GRAPHICS-WINDOW
 210
 10
-647
-448
+1051
+312
 -1
 -1
-13.0
+1.0
 1
 10
 1
@@ -180,10 +186,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
+0
+832
+0
+292
 0
 0
 1
