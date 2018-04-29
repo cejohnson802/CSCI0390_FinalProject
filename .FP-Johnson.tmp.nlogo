@@ -48,7 +48,7 @@ end
 
 ; Patch context
 to spawn
-  ; the female
+  ;
 
 end
 
