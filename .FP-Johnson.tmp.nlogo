@@ -25,6 +25,7 @@ patches-own [
   fifteen-to-nineteen
   twenty-to-twenty-four
   twenty-five-to-twenty-nine
+  total-fish
 ]
 
 
@@ -44,7 +45,9 @@ to move
   ifelse day < 170 [
     set day day + 1
     color-patches
+    show fish-population
     migrate
+    show fish-population
   ][
     set day 0
     set year year + 1
@@ -144,6 +147,8 @@ to init-fish
     ][
       set twenty-five-to-twenty-nine floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability * -1))))
     ]
+
+    set total-fish fish-on-patch
   ]
 end
 
@@ -188,10 +193,10 @@ end
 
 ; Observer context
 to migrate
-  ask patches [
-    let good-neighbors neighbors with [pxcor >= [pxcor] of myself]
+  ask patches with [total-fish > 0] [
+    let good-neighbors patches in-radius 5 with [pxcor > [pxcor] of myself and (pycor = [pycor] of myself or pycor = [pycor] of myself + 1 or pycor = [pycor] of myself - 1)]
     ask good-neighbors [
-      let taken-zero-to-four (random-float 0.) * [zero-to-four] of myself
+      let taken-zero-to-four (random-float 0.2) * [zero-to-four] of myself
       let taken-five-to-nine (random-float 0.2) * [five-to-nine] of myself
       let taken-ten-to-fourteen (random-float 0.2) * [ten-to-fourteen] of myself
       let taken-fifteen-to-nineteen (random-float 0.2) * [fifteen-to-nineteen] of myself
@@ -235,7 +240,7 @@ end
 
 
 ; Observer context
-to-report total-fish
+to-report fish-population
   let total 0
   ask patches with [in-boundary? = true][
     set total total +
@@ -330,23 +335,12 @@ NIL
 1
 
 MONITOR
-1082
-87
-1139
-132
+1067
+12
+1124
+57
 NIL
 day
-17
-1
-11
-
-MONITOR
-1084
-29
-1155
-74
-NIL
-total-fish
 17
 1
 11
