@@ -194,26 +194,30 @@ end
 ; Observer context
 to migrate
   ask patches with [total-fish > 0] [
-    let good-neighbors patches in-radius 5 with [pxcor > [pxcor] of myself and (pycor = [pycor] of myself or pycor = [pycor] of myself + 1 or pycor = [pycor] of myself - 1)]
-    ask good-neighbors [
-      let taken-zero-to-four (random-float 0.2) * [zero-to-four] of myself
-      let taken-five-to-nine (random-float 0.2) * [five-to-nine] of myself
-      let taken-ten-to-fourteen (random-float 0.2) * [ten-to-fourteen] of myself
-      let taken-fifteen-to-nineteen (random-float 0.2) * [fifteen-to-nineteen] of myself
-      let taken-twenty-to-twenty-four (random-float 0.2) * [twenty-to-twenty-four] of myself
-      let taken-twenty-five-to-twenty-nine (random-float 0.2) * [twenty-five-to-twenty-nine] of myself
-      set zero-to-four zero-to-four + taken-zero-to-four
-      ask myself [set zero-to-four zero-to-four - taken-zero-to-four]
-      set five-to-nine five-to-nine + taken-five-to-nine
-      ask myself [set five-to-nine five-to-nine - taken-five-to-nine]
-      set ten-to-fourteen ten-to-fourteen + taken-ten-to-fourteen
-      ask myself [set ten-to-fourteen ten-to-fourteen - taken-ten-to-fourteen]
-      set fifteen-to-nineteen fifteen-to-nineteen + taken-fifteen-to-nineteen
-      ask myself [set fifteen-to-nineteen fifteen-to-nineteen - taken-fifteen-to-nineteen]
-      set twenty-to-twenty-four twenty-to-twenty-four + taken-twenty-to-twenty-four
-      ask myself [set twenty-to-twenty-four twenty-to-twenty-four - taken-twenty-to-twenty-four]
-      set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + taken-twenty-five-to-twenty-nine
-      ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - taken-twenty-five-to-twenty-nine]
+    ;repeat 10 [
+      let good-neighbors patches in-radius 5 with [pxcor > [pxcor] of myself and (pycor = [pycor] of myself or pycor = [pycor] of myself +  or pycor = [pycor] of myself - 5) and in-boundary? = true] ;or pycor = [pycor] of myself + 1 or pycor = [pycor] of myself - 1)]
+      ask good-neighbors [
+        let taken-zero-to-four (random-float 0.2) * [zero-to-four] of myself
+        let taken-five-to-nine (random-float 0.2) * [five-to-nine] of myself
+        let taken-ten-to-fourteen (random-float 0.2) * [ten-to-fourteen] of myself
+        let taken-fifteen-to-nineteen (random-float 0.2) * [fifteen-to-nineteen] of myself
+        let taken-twenty-to-twenty-four (random-float 0.2) * [twenty-to-twenty-four] of myself
+        let taken-twenty-five-to-twenty-nine (random-float 0.2) * [twenty-five-to-twenty-nine] of myself
+        set zero-to-four zero-to-four + taken-zero-to-four
+        ask myself [set zero-to-four zero-to-four - taken-zero-to-four]
+        set five-to-nine five-to-nine + taken-five-to-nine
+        ask myself [set five-to-nine five-to-nine - taken-five-to-nine]
+        set ten-to-fourteen ten-to-fourteen + taken-ten-to-fourteen
+        ask myself [set ten-to-fourteen ten-to-fourteen - taken-ten-to-fourteen]
+        set fifteen-to-nineteen fifteen-to-nineteen + taken-fifteen-to-nineteen
+        ask myself [set fifteen-to-nineteen fifteen-to-nineteen - taken-fifteen-to-nineteen]
+        set twenty-to-twenty-four twenty-to-twenty-four + taken-twenty-to-twenty-four
+        ask myself [set twenty-to-twenty-four twenty-to-twenty-four - taken-twenty-to-twenty-four]
+        set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + taken-twenty-five-to-twenty-nine
+        ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - taken-twenty-five-to-twenty-nine]
+        set total-fish fish-on-patch
+        ask myself [set total-fish fish-on-patch]
+      ;]
     ]
   ]
 end
@@ -311,7 +315,7 @@ approx-init-pop
 approx-init-pop
 0
 10000000
-5140000.0
+1380000.0
 10000
 1
 NIL
