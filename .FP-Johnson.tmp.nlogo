@@ -20,11 +20,23 @@ patches-own [
 to setup
   ca
   import-pcolors "map2.png"
-  set-state
-  ask patches with [pcolor = grey] [set state "land"]
-  ask patches with [pcolor = orange] [set state "maine"]
+  set-states
+  ; import-pcolors "map1.png"
 end
 
+
+; note: need to deal with mixed-color patches. resampling
+to set-states
+  ask patches with [pcolor = 5.6] [set state "land"]
+  ask patches with [pcolor = 97.9] [set state "water"]
+  ask patches with [pcolor = 26.9] [set state "ME"]
+  ask patches with [pcolor = 67.8 ] [set state "NH"]
+  ask patches with [pcolor = 63.2][set state "RI"]
+  ask patches with [pcolor = 15.7] [set state "MA"]
+  ask patches with [pcolor = 45.6 ] [set state "NY"]
+  ask patches with [pcolor = 114.2][set state "CT"]
+  ask patches with [pcolor = 15.6][set state "NJ"]
+end
 
 
 
