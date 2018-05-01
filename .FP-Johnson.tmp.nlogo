@@ -12,9 +12,12 @@ globals [
   min-window
   max-window
   distribution-variability
+  traveling-patches ; patches in boundary
 ]
 
 breed [ boats boat ]
+
+
 
 patches-own [
   state
@@ -38,16 +41,18 @@ to setup
   import-pcolors "map1.png"
   init-globals
   init-fish
+  color-patches
 end
 
 ; Observer context
 to move
+  ;show(fish-population)
   ifelse day < 170 [
     set day day + 1
     color-patches
-    show fish-population
+    ;show fish-population
     migrate
-    show fish-population
+    ;show fish-population
   ][
     set day 0
     set year year + 1
@@ -97,55 +102,56 @@ to init-globals
   set min-window 0
   set max-window 40
   set distribution-variability 0.2
+  set traveling-patches patches with [in-boundary?]
 end
 
 
 ; Observer context
 to init-fish
   let piw patches-in-window
-  let distribution floor (approx-init-pop / piw)
-  ask patches with [pxcor >= min-window and pxcor <= max-window and in-boundary? = true] [
+  let distribution round (approx-init-pop / piw)
+  ask traveling-patches with [pxcor >= min-window and pxcor <= max-window and pycor < 138] [ ; delete pycor when map is fixed
 
     let plus-minus random 2
     ifelse plus-minus = 0 [
-      set zero-to-four floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability))))
+      set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
     ][
-      set zero-to-four floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability * -1))))
+      set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set five-to-nine floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability))))
+      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
     ][
-      set five-to-nine floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability * -1))))
+      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set ten-to-fourteen floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability))))
+      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
     ][
-      set ten-to-fourteen floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability * -1))))
+      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set fifteen-to-nineteen floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability))))
+      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
     ][
-      set fifteen-to-nineteen floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability * -1))))
+      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set twenty-to-twenty-four floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability))))
+      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
     ][
-      set twenty-to-twenty-four floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability * -1))))
+      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set twenty-five-to-twenty-nine floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability))))
+      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
     ][
-      set twenty-five-to-twenty-nine floor ((0.12 + random-float 0.08) * (distribution + (floor (distribution * random-float distribution-variability * -1))))
+      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
     ]
 
     set total-fish fish-on-patch
@@ -160,7 +166,7 @@ end
 
 ; Observer context
 to age-up
-  ask patches [
+  ask traveling-patches [
     ; the thirty year old fish die
     set twenty-five-to-twenty-nine ((floor (twenty-five-to-twenty-nine / 5)) * 4)
     ; the twenty-four year old fish age up to the twenty-five-to-twenty-nine age group
@@ -193,39 +199,112 @@ end
 
 ; Observer context
 to migrate
-  ask patches with [total-fish > 0] [
+  ask traveling-patches with [total-fish > 0] [
     ;repeat 10 [
-      let good-neighbors patches in-radius 5 with [pxcor > [pxcor] of myself and (pycor = [pycor] of myself or pycor = [pycor] of myself +  or pycor = [pycor] of myself - 5) and in-boundary? = true] ;or pycor = [pycor] of myself + 1 or pycor = [pycor] of myself - 1)]
-      ask good-neighbors [
-        let taken-zero-to-four (random-float 0.2) * [zero-to-four] of myself
-        let taken-five-to-nine (random-float 0.2) * [five-to-nine] of myself
-        let taken-ten-to-fourteen (random-float 0.2) * [ten-to-fourteen] of myself
-        let taken-fifteen-to-nineteen (random-float 0.2) * [fifteen-to-nineteen] of myself
-        let taken-twenty-to-twenty-four (random-float 0.2) * [twenty-to-twenty-four] of myself
-        let taken-twenty-five-to-twenty-nine (random-float 0.2) * [twenty-five-to-twenty-nine] of myself
-        set zero-to-four zero-to-four + taken-zero-to-four
-        ask myself [set zero-to-four zero-to-four - taken-zero-to-four]
-        set five-to-nine five-to-nine + taken-five-to-nine
-        ask myself [set five-to-nine five-to-nine - taken-five-to-nine]
-        set ten-to-fourteen ten-to-fourteen + taken-ten-to-fourteen
-        ask myself [set ten-to-fourteen ten-to-fourteen - taken-ten-to-fourteen]
-        set fifteen-to-nineteen fifteen-to-nineteen + taken-fifteen-to-nineteen
-        ask myself [set fifteen-to-nineteen fifteen-to-nineteen - taken-fifteen-to-nineteen]
-        set twenty-to-twenty-four twenty-to-twenty-four + taken-twenty-to-twenty-four
-        ask myself [set twenty-to-twenty-four twenty-to-twenty-four - taken-twenty-to-twenty-four]
-        set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + taken-twenty-five-to-twenty-nine
-        ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - taken-twenty-five-to-twenty-nine]
-        set total-fish fish-on-patch
-        ask myself [set total-fish fish-on-patch]
+    let good-neighbors patches in-radius 10 with
+    [pxcor > [pxcor] of myself
+      and (pycor = [pycor] of myself
+        or pycor = [pycor] of myself + 7
+        or pycor = [pycor] of myself - 7
+        or pycor = [pycor] of myself + 5
+        or pycor = [pycor] of myself - 5
+      )
+      and in-boundary?] ;or pycor = [pycor] of myself + 1 or pycor = [pycor] of myself - 1)]
+    if not any? good-neighbors [ set good-neighbors patches in-radius 20 with
+      [pxcor <= [pxcor] of myself
+        and (pycor = [pycor] of myself
+          or pycor = [pycor] of myself + 10
+          or pycor = [pycor] of myself - 10
+        )
+        and in-boundary?]
+    ]
+    ask good-neighbors [
+      ; let n = p * x
+      ; let n-frac = n - floor n
+      ; let n floor r
+      ; take an additional fish with probability n-frac
+      let n-zero-to-four (random-float 0.2) * [zero-to-four] of myself
+      let frac-zero-to-four n-zero-to-four - (floor n-zero-to-four)
+      let floor-zero-to-four floor n-zero-to-four
+      let prob random-float 1
+      if prob < frac-zero-to-four [ set floor-zero-to-four floor-zero-to-four + 1 ]
+      set zero-to-four zero-to-four + floor-zero-to-four
+      ask myself [set zero-to-four zero-to-four - floor-zero-to-four]
+;      show(n-zero-to-four)
+;      show(frac-zero-to-four)
+;      show(floor-zero-to-four)
+;      show(prob)
+
+      let n-five-to-nine (random-float 0.2) * [five-to-nine] of myself
+      let frac-five-to-nine n-five-to-nine - (floor n-five-to-nine)
+      let floor-five-to-nine floor n-five-to-nine
+      set prob random-float 1
+      if prob < frac-five-to-nine [ set floor-five-to-nine floor-five-to-nine + 1 ]
+      set five-to-nine five-to-nine + floor-five-to-nine
+      ask myself [set five-to-nine five-to-nine - floor-five-to-nine]
+
+      let n-ten-to-fourteen (random-float 0.2) * [ten-to-fourteen] of myself
+      let frac-ten-to-fourteen n-ten-to-fourteen - (floor n-ten-to-fourteen)
+      let floor-ten-to-fourteen floor n-ten-to-fourteen
+      set prob random-float 1
+      if prob < frac-ten-to-fourteen [ set floor-ten-to-fourteen floor-ten-to-fourteen + 1 ]
+      set ten-to-fourteen ten-to-fourteen + floor-ten-to-fourteen
+      ask myself [set ten-to-fourteen ten-to-fourteen - floor-ten-to-fourteen]
+
+      let n-fifteen-to-nineteen (random-float 0.2) * [fifteen-to-nineteen] of myself
+      let frac-fifteen-to-nineteen n-fifteen-to-nineteen - (floor n-fifteen-to-nineteen)
+      let floor-fifteen-to-nineteen floor n-fifteen-to-nineteen
+      set prob random-float 1
+      if prob < frac-fifteen-to-nineteen [ set floor-fifteen-to-nineteen floor-fifteen-to-nineteen + 1 ]
+      set fifteen-to-nineteen fifteen-to-nineteen + floor-fifteen-to-nineteen
+      ask myself [set fifteen-to-nineteen fifteen-to-nineteen - floor-fifteen-to-nineteen]
+
+      let n-twenty-to-twenty-four (random-float 0.2) * [twenty-to-twenty-four] of myself
+      let frac-twenty-to-twenty-four n-twenty-to-twenty-four - (floor n-twenty-to-twenty-four)
+      let floor-twenty-to-twenty-four floor n-twenty-to-twenty-four
+      set prob random-float 1
+      if prob < frac-twenty-to-twenty-four [ set floor-twenty-to-twenty-four floor-twenty-to-twenty-four + 1 ]
+      set twenty-to-twenty-four twenty-to-twenty-four + floor-twenty-to-twenty-four
+      ask myself [set twenty-to-twenty-four twenty-to-twenty-four - floor-twenty-to-twenty-four]
+
+      let n-twenty-five-to-twenty-nine (random-float 0.2) * [twenty-five-to-twenty-nine] of myself
+      let frac-twenty-five-to-twenty-nine n-twenty-five-to-twenty-nine - (floor n-twenty-five-to-twenty-nine)
+      let floor-twenty-five-to-twenty-nine floor n-twenty-five-to-twenty-nine
+      set prob random-float 1
+      if prob < frac-twenty-five-to-twenty-nine [ set floor-twenty-five-to-twenty-nine floor-twenty-five-to-twenty-nine + 1 ]
+      set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + floor-twenty-five-to-twenty-nine
+      ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - floor-twenty-five-to-twenty-nine]
+
+      set total-fish fish-on-patch
+      ask myself [set total-fish fish-on-patch]
       ;]
     ]
   ]
 end
 
+
+;let taken-twenty-five-to-twenty-nine floor ((random-float 0.2) * [twenty-five-to-twenty-nine] of myself)
+; set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + taken-twenty-five-to-twenty-nine
+; ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - taken-twenty-five-to-twenty-nine]
+
 ; Observer context
 to color-patches
-  ask patches with [in-boundary? = true] [
-    set pcolor 97.9 + fish-on-patch
+  ask traveling-patches with [fish-on-patch >= 0] [
+    if fish-on-patch > 1 and fish-on-patch <= 10 [
+    set pcolor 96
+    ]
+    if fish-on-patch > 10 and fish-on-patch <= 100 [
+    set pcolor 106
+    ]
+    if fish-on-patch > 100 and fish-on-patch <= 1000 [
+    set pcolor 116
+    ]
+    if fish-on-patch > 1000 and fish-on-patch <= 10000 [
+    set pcolor 126
+    ]
+    if fish-on-patch > 100000 [
+    set pcolor 16
+    ]
   ]
 end
 
@@ -246,7 +325,7 @@ end
 ; Observer context
 to-report fish-population
   let total 0
-  ask patches with [in-boundary? = true][
+  ask traveling-patches [
     set total total +
     zero-to-four +
     five-to-nine +
@@ -259,14 +338,41 @@ to-report fish-population
 end
 
 to-report patches-in-window
-  report count patches with [pxcor >= min-window and pxcor <= max-window and in-boundary? = true]
+  report count traveling-patches with [pxcor >= min-window and pxcor <= max-window]
 end
+
+
+
+;
+;
+;      let taken-five-to-nine floor ((random-float 0.2) * [five-to-nine] of myself)
+;      set five-to-nine five-to-nine + taken-five-to-nine
+;      ask myself [set five-to-nine five-to-nine - taken-five-to-nine]
+;
+;      let taken-ten-to-fourteen floor ((random-float 0.2) * [ten-to-fourteen] of myself)
+;      set ten-to-fourteen ten-to-fourteen + taken-ten-to-fourteen
+;      ask myself [set ten-to-fourteen ten-to-fourteen - taken-ten-to-fourteen]
+;
+;      let taken-fifteen-to-nineteen floor ((random-float 0.2) * [fifteen-to-nineteen] of myself)
+;      set fifteen-to-nineteen fifteen-to-nineteen + taken-fifteen-to-nineteen
+;      ask myself [set fifteen-to-nineteen fifteen-to-nineteen - taken-fifteen-to-nineteen]
+;
+;      let taken-twenty-to-twenty-four floor ((random-float 0.2) * [twenty-to-twenty-four] of myself)
+;      set twenty-to-twenty-four twenty-to-twenty-four + taken-twenty-to-twenty-four
+;      ask myself [set twenty-to-twenty-four twenty-to-twenty-four - taken-twenty-to-twenty-four]
+;
+;      let taken-twenty-five-to-twenty-nine floor ((random-float 0.2) * [twenty-five-to-twenty-nine] of myself)
+;      set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + taken-twenty-five-to-twenty-nine
+;      ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - taken-twenty-five-to-twenty-nine]
+;
+;      set total-fish fish-on-patch
+;      ask myself [set total-fish fish-on-patch]
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
 10
-1051
-312
+1052
+311
 -1
 -1
 1.0
@@ -280,9 +386,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-832
+833
 0
-292
+291
 0
 0
 1
@@ -315,7 +421,7 @@ approx-init-pop
 approx-init-pop
 0
 10000000
-1380000.0
+4310000.0
 10000
 1
 NIL
@@ -345,6 +451,17 @@ MONITOR
 57
 NIL
 day
+17
+1
+11
+
+MONITOR
+1068
+65
+1178
+110
+NIL
+fish-population
 17
 1
 11
