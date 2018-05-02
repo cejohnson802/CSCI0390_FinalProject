@@ -464,7 +464,7 @@ to-report fish-population
 end
 
 to-report num-patches-in-window
-  report count traveling-patches with [pxcor >= min-window and pxcor <= max-window and pycor < 138] ;remove 138
+  report count traveling-patches with [pxcor >= min-window and pxcor <= max-window ] ;remove 138
 end
 
 to-report patches-in-window
