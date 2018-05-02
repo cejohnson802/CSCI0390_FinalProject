@@ -201,7 +201,7 @@ end
 to migrate
   ask traveling-patches with [total-fish > 0] [
     ;repeat 10 [
-    let good-neighbors patches in-radius 10 with
+    let good-neighbors patches in-radius 8 with
     [pxcor > [pxcor] of myself
       and (pycor = [pycor] of myself
         or pycor = [pycor] of myself + 7
@@ -210,11 +210,11 @@ to migrate
         or pycor = [pycor] of myself - 5
       )
       and in-boundary?] ;or pycor = [pycor] of myself + 1 or pycor = [pycor] of myself - 1)]
-    if not any? good-neighbors [ set good-neighbors patches in-radius 20 with
+    if not any? good-neighbors [ set good-neighbors patches in-radius 15 with
       [pxcor <= [pxcor] of myself
         and (pycor = [pycor] of myself
-          or pycor = [pycor] of myself + 10
-          or pycor = [pycor] of myself - 10
+          or pycor = [pycor] of myself + 14
+          or pycor = [pycor] of myself - 14
         )
         and in-boundary?]
     ]
