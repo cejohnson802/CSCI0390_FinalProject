@@ -3,8 +3,18 @@
 ; CSCI 0390
 ; May 14, 2018
 
+; 1. How to get around Massachusetts?
+; 2. How to speed up our migration?
+; 3.
+
+
 ; interface
 ; approx-init-pop
+
+; Profiler
+; extension, not part of core code
+extensions [ profiler ]
+
 
 globals [
   day
@@ -12,7 +22,7 @@ globals [
   min-window
   max-window
   distribution-variability
-  traveling-patches ; patches in boundary
+  traveling-patches          ; patches in-boundary?
   daily-death-rate
   offseason-death-rate
 ]
@@ -30,43 +40,55 @@ patches-own [
   twenty-to-twenty-four
   twenty-five-to-twenty-nine
   total-fish
+  visited?
+  coastline?
+  coast-num
+  closest-coast
 ]
 
 
 ; Observer context
 to setup
   ca
+  ;if profile? [profiler:start] ; call the start procedure within the profiler extension
   reset-ticks
-  import-pcolors "map2.png"
+  import-pcolors "map2d-01.png"
   init-patches
   import-pcolors "map1.png"
   init-globals
-  normal-init-fish
+  init-fish ; eventually replace with normal-init-fish
   color-patches
+  if profile? [
+    profiler:stop
+    print profiler:report
+    profiler:reset
+  ] ; exclusive time doesn't include subprocedure time
 end
 
 ; Observer context
 to move
-  ;show(fish-population)
+  ;show(f)
   ifelse day < 170 [ ; 170
+    if profile? [profiler:start]
     set day day + 1
     color-patches
+    ;let fishies traveling-patches with [fish-on-patch > 0]
     ;show fish-population
     daily-death
     migrate
     ;show fish-population
+    if profile? [
+      profiler:stop
+      print profiler:report
+      profiler:reset
+    ]
   ][
     set day 0
     set year year + 1
     redistribute-fish
-    ;color-patches
     offseason-death
     age-up
-    ;color-patches
-    ;stop ; eventually delete this
-    ; kill
-    ; spawn
-    ; move patches
+
   ]
 end
 
@@ -83,24 +105,39 @@ to init-patches
     set twenty-five-to-twenty-nine 0
   ]
   set-states
+  set-coast
 end
 
 
 ; Observer context
 to set-states
   ask patches [ set in-boundary? false ]
+;  ask patches with [pcolor = 5.6] [set state "land"]
+;  ask patches with [pcolor = 97.9] [set state "water"]
+;  ask patches with [pcolor = 26.9] [set state "ME"]
+;  ask patches with [pcolor = 67.8 ] [set state "NH"]
+;  ask patches with [pcolor = 63.2] [set state "RI"]
+;  ask patches with [pcolor = 15.7] [set state "MA"]
+;  ask patches with [pcolor = 45.6 ] [set state "NY"]
+;  ask patches with [pcolor = 114.2] [set state "CT"]
+;  ask patches with [pcolor = 15.6] [set state "NJ"]
+;  ask patches with [state = "ME" or state = "NH" or state = "RI" or state = "MA" or state = "NY" or state = "CT" or state = "NJ"] [ set in-boundary? true ]
   ask patches with [pcolor = 5.6] [set state "land"]
-  ask patches with [pcolor = 97.9] [set state "water"]
-  ask patches with [pcolor = 26.9] [set state "ME"]
-  ask patches with [pcolor = 67.8 ] [set state "NH"]
-  ask patches with [pcolor = 63.2] [set state "RI"]
-  ask patches with [pcolor = 15.7] [set state "MA"]
-  ask patches with [pcolor = 45.6 ] [set state "NY"]
-  ask patches with [pcolor = 114.2] [set state "CT"]
-  ask patches with [pcolor = 15.6] [set state "NJ"]
+  ask patches with [pcolor = 108] [set state "water"] ;97.9
+  ask patches with [pcolor = 25.2] [set state "ME"] ;26.9
+  ask patches with [pcolor = 85.5] [set state "NH"] ;67.8
+  ask patches with [pcolor = 55.1] [set state "RI"] ; 63.2
+  ask patches with [pcolor = 125.1] [set state "MA"]  ;15.7
+  ask patches with [pcolor = 45.2 ] [set state "NY"] ; 45.6
+  ask patches with [pcolor = 115] [set state "CT"] ; 114.2
+  ask patches with [pcolor = 14.7] [set state "NJ"]  ;15.6
   ask patches with [state = "ME" or state = "NH" or state = "RI" or state = "MA" or state = "NY" or state = "CT" or state = "NJ"] [ set in-boundary? true ]
 end
 
+
+to set-coast
+
+end
 
 ; Observer context
 to init-globals
@@ -175,7 +212,13 @@ to normal-init-fish
   let distribution floor (approx-init-pop / npiw)
 
   repeat npiw [
-    ask patch random-normal 20 5 random-normal 130 5 [
+
+    let patch-to-fill patch random-normal 20 5 random-normal 130 5
+    while [[not in-boundary?] of patch-to-fill] [
+      set patch-to-fill patch random-normal 20 5 random-normal 130 5
+    ]
+
+    ask patch-to-fill [
       let plus-minus random 2
       ifelse plus-minus = 0 [
         set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
@@ -224,12 +267,6 @@ to normal-init-fish
   ; Call migrate once to spread out the normally-distributed fish
   migrate
 end
-
-;; Observer context
-;to update-window
-;  set min-window min-window + 4
-;  set max-window max-window + 4
-;end
 
 
 to redistribute-fish
@@ -328,87 +365,118 @@ end
 ; Observer context
 to migrate
   ask traveling-patches with [total-fish > 0] [
-    ;repeat 10 [
-    let good-neighbors patches in-radius 8 with
-    [pxcor > [pxcor] of myself
+    let good-neighbors find-good-neighbors
+    ask good-neighbors [
+      migrate-zero-to-four
+      migrate-five-to-nine
+      migrate-ten-to-fourteen
+      migrate-fifteen-to-nineteen
+      migrate-twenty-to-twenty-four
+      migrate-twenty-four-to-twenty-nine
+      set total-fish fish-on-patch
+      ask myself [set total-fish fish-on-patch]
+    ]
+  ]
+end
+
+
+; Patch context
+to migrate-zero-to-four
+  let n-zero-to-four (random-float 0.2) * [zero-to-four] of myself
+  let frac-zero-to-four n-zero-to-four - (floor n-zero-to-four)
+  let floor-zero-to-four floor n-zero-to-four
+  let prob random-float 1
+  if prob < frac-zero-to-four [ set floor-zero-to-four floor-zero-to-four + 1 ]
+  set zero-to-four zero-to-four + floor-zero-to-four
+  ask myself [set zero-to-four zero-to-four - floor-zero-to-four]
+end
+
+
+; Patch context
+to migrate-five-to-nine
+  let n-five-to-nine (random-float 0.2) * [five-to-nine] of myself
+  let frac-five-to-nine n-five-to-nine - (floor n-five-to-nine)
+  let floor-five-to-nine floor n-five-to-nine
+  let prob random-float 1
+  if prob < frac-five-to-nine [ set floor-five-to-nine floor-five-to-nine + 1 ]
+  set five-to-nine five-to-nine + floor-five-to-nine
+  ask myself [set five-to-nine five-to-nine - floor-five-to-nine]
+end
+
+
+; Patch context
+to migrate-ten-to-fourteen
+  let n-ten-to-fourteen (random-float 0.2) * [ten-to-fourteen] of myself
+  let frac-ten-to-fourteen n-ten-to-fourteen - (floor n-ten-to-fourteen)
+  let floor-ten-to-fourteen floor n-ten-to-fourteen
+  let prob random-float 1
+  if prob < frac-ten-to-fourteen [ set floor-ten-to-fourteen floor-ten-to-fourteen + 1 ]
+  set ten-to-fourteen ten-to-fourteen + floor-ten-to-fourteen
+  ask myself [set ten-to-fourteen ten-to-fourteen - floor-ten-to-fourteen]
+end
+
+
+; Patch context
+to migrate-fifteen-to-nineteen
+  let n-fifteen-to-nineteen (random-float 0.2) * [fifteen-to-nineteen] of myself
+  let frac-fifteen-to-nineteen n-fifteen-to-nineteen - (floor n-fifteen-to-nineteen)
+  let floor-fifteen-to-nineteen floor n-fifteen-to-nineteen
+  let prob random-float 1
+  if prob < frac-fifteen-to-nineteen [ set floor-fifteen-to-nineteen floor-fifteen-to-nineteen + 1 ]
+  set fifteen-to-nineteen fifteen-to-nineteen + floor-fifteen-to-nineteen
+  ask myself [set fifteen-to-nineteen fifteen-to-nineteen - floor-fifteen-to-nineteen]
+end
+
+
+; Patch context
+to migrate-twenty-to-twenty-four
+  let n-twenty-to-twenty-four (random-float 0.2) * [twenty-to-twenty-four] of myself
+  let frac-twenty-to-twenty-four n-twenty-to-twenty-four - (floor n-twenty-to-twenty-four)
+  let floor-twenty-to-twenty-four floor n-twenty-to-twenty-four
+  let prob random-float 1
+  if prob < frac-twenty-to-twenty-four [ set floor-twenty-to-twenty-four floor-twenty-to-twenty-four + 1 ]
+  set twenty-to-twenty-four twenty-to-twenty-four + floor-twenty-to-twenty-four
+  ask myself [set twenty-to-twenty-four twenty-to-twenty-four - floor-twenty-to-twenty-four]
+end
+
+
+; Patch context
+to migrate-twenty-four-to-twenty-nine
+  let n-twenty-five-to-twenty-nine (random-float 0.2) * [twenty-five-to-twenty-nine] of myself
+  let frac-twenty-five-to-twenty-nine n-twenty-five-to-twenty-nine - (floor n-twenty-five-to-twenty-nine)
+  let floor-twenty-five-to-twenty-nine floor n-twenty-five-to-twenty-nine
+  let prob random-float 1
+  if prob < frac-twenty-five-to-twenty-nine [ set floor-twenty-five-to-twenty-nine floor-twenty-five-to-twenty-nine + 1 ]
+  set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + floor-twenty-five-to-twenty-nine
+  ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - floor-twenty-five-to-twenty-nine]
+end
+
+
+;pick nearest, not visited neighbor
+; list of coastal patches in increasing order
+;
+
+; Patch context
+to-report find-good-neighbors
+  let good-neighbors patches in-radius 8 with
+    [(pxcor = [pxcor] of myself or pxcor = [pxcor] of myself + 6 or pxcor = [pxcor] of myself + 8)
       and (pycor = [pycor] of myself
         or pycor = [pycor] of myself + 7
         or pycor = [pycor] of myself - 7
         or pycor = [pycor] of myself + 5
         or pycor = [pycor] of myself - 5)
       and in-boundary?] ;or pycor = [pycor] of myself + 1 or pycor = [pycor] of myself - 1)]
-    if not any? good-neighbors [ set good-neighbors patches in-radius 10 with
-      [pxcor <= [pxcor] of myself
-        and (pycor = [pycor] of myself
-          or pycor = [pycor] of myself + 10
-          or pycor = [pycor] of myself - 10
-        )
-        and in-boundary?]
-    ]
-    ask good-neighbors [
-      ; let n = p * x
-      ; let n-frac = n - floor n
-      ; let n floor r
-      ; take an additional fish with probability n-frac
-      let n-zero-to-four (random-float 0.2) * [zero-to-four] of myself
-      let frac-zero-to-four n-zero-to-four - (floor n-zero-to-four)
-      let floor-zero-to-four floor n-zero-to-four
-      let prob random-float 1
-      if prob < frac-zero-to-four [ set floor-zero-to-four floor-zero-to-four + 1 ]
-      set zero-to-four zero-to-four + floor-zero-to-four
-      ask myself [set zero-to-four zero-to-four - floor-zero-to-four]
-
-      let n-five-to-nine (random-float 0.2) * [five-to-nine] of myself
-      let frac-five-to-nine n-five-to-nine - (floor n-five-to-nine)
-      let floor-five-to-nine floor n-five-to-nine
-      set prob random-float 1
-      if prob < frac-five-to-nine [ set floor-five-to-nine floor-five-to-nine + 1 ]
-      set five-to-nine five-to-nine + floor-five-to-nine
-      ask myself [set five-to-nine five-to-nine - floor-five-to-nine]
-
-      let n-ten-to-fourteen (random-float 0.2) * [ten-to-fourteen] of myself
-      let frac-ten-to-fourteen n-ten-to-fourteen - (floor n-ten-to-fourteen)
-      let floor-ten-to-fourteen floor n-ten-to-fourteen
-      set prob random-float 1
-      if prob < frac-ten-to-fourteen [ set floor-ten-to-fourteen floor-ten-to-fourteen + 1 ]
-      set ten-to-fourteen ten-to-fourteen + floor-ten-to-fourteen
-      ask myself [set ten-to-fourteen ten-to-fourteen - floor-ten-to-fourteen]
-
-      let n-fifteen-to-nineteen (random-float 0.2) * [fifteen-to-nineteen] of myself
-      let frac-fifteen-to-nineteen n-fifteen-to-nineteen - (floor n-fifteen-to-nineteen)
-      let floor-fifteen-to-nineteen floor n-fifteen-to-nineteen
-      set prob random-float 1
-      if prob < frac-fifteen-to-nineteen [ set floor-fifteen-to-nineteen floor-fifteen-to-nineteen + 1 ]
-      set fifteen-to-nineteen fifteen-to-nineteen + floor-fifteen-to-nineteen
-      ask myself [set fifteen-to-nineteen fifteen-to-nineteen - floor-fifteen-to-nineteen]
-
-      let n-twenty-to-twenty-four (random-float 0.2) * [twenty-to-twenty-four] of myself
-      let frac-twenty-to-twenty-four n-twenty-to-twenty-four - (floor n-twenty-to-twenty-four)
-      let floor-twenty-to-twenty-four floor n-twenty-to-twenty-four
-      set prob random-float 1
-      if prob < frac-twenty-to-twenty-four [ set floor-twenty-to-twenty-four floor-twenty-to-twenty-four + 1 ]
-      set twenty-to-twenty-four twenty-to-twenty-four + floor-twenty-to-twenty-four
-      ask myself [set twenty-to-twenty-four twenty-to-twenty-four - floor-twenty-to-twenty-four]
-
-      let n-twenty-five-to-twenty-nine (random-float 0.2) * [twenty-five-to-twenty-nine] of myself
-      let frac-twenty-five-to-twenty-nine n-twenty-five-to-twenty-nine - (floor n-twenty-five-to-twenty-nine)
-      let floor-twenty-five-to-twenty-nine floor n-twenty-five-to-twenty-nine
-      set prob random-float 1
-      if prob < frac-twenty-five-to-twenty-nine [ set floor-twenty-five-to-twenty-nine floor-twenty-five-to-twenty-nine + 1 ]
-      set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + floor-twenty-five-to-twenty-nine
-      ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - floor-twenty-five-to-twenty-nine]
-
-      set total-fish fish-on-patch
-      ask myself [set total-fish fish-on-patch]
-      ;]
-    ]
+  if not any? good-neighbors [ set good-neighbors patches in-radius 10 with
+    [pxcor <= [pxcor] of myself
+      and (pycor = [pycor] of myself
+        or pycor = [pycor] of myself + 10
+        or pycor = [pycor] of myself - 10
+      )
+      and in-boundary?]
   ]
+  report good-neighbors
 end
 
-
-;let taken-twenty-five-to-twenty-nine floor ((random-float 0.2) * [twenty-five-to-twenty-nine] of myself)
-; set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + taken-twenty-five-to-twenty-nine
-; ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - taken-twenty-five-to-twenty-nine]
 
 ; Observer context
 to color-patches
@@ -464,12 +532,34 @@ to-report fish-population
 end
 
 to-report num-patches-in-window
-  report count traveling-patches with [pxcor >= min-window and pxcor <= max-window ] ;remove 138
+  report count traveling-patches with [pxcor >= min-window and pxcor <= max-window and pycor < 138] ;remove 138
 end
 
 to-report patches-in-window
   report traveling-patches with [pxcor >= min-window and pxcor <= max-window and pycor < 138] ;remove 138
 end
+
+
+
+
+
+; NOTES
+; let n = p * x
+; let n-frac = n - floor n
+; let n floor r
+; take an additional fish with probability n-frac
+
+
+;; Observer context
+;to update-window
+;  set min-window min-window + 4
+;  set max-window max-window + 4
+;end
+
+
+;let taken-twenty-five-to-twenty-nine floor ((random-float 0.2) * [twenty-five-to-twenty-nine] of myself)
+; set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + taken-twenty-five-to-twenty-nine
+; ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - taken-twenty-five-to-twenty-nine]
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -499,10 +589,10 @@ ticks
 30.0
 
 BUTTON
-27
-105
-93
-138
+16
+102
+82
+135
 NIL
 setup
 NIL
@@ -516,25 +606,25 @@ NIL
 1
 
 SLIDER
-25
-344
-221
-377
+4
+62
+200
+95
 approx-init-pop
 approx-init-pop
 0
 10000000
-7290000.0
+4200000.0
 10000
 1
 NIL
 HORIZONTAL
 
 BUTTON
-28
-145
-93
-178
+17
+142
+82
+175
 NIL
 move
 T
@@ -579,6 +669,17 @@ year
 17
 1
 11
+
+SWITCH
+90
+102
+193
+135
+profile?
+profile?
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
