@@ -13,6 +13,8 @@
 
 ; Profiler
 ; extension, not part of core code
+
+__includes [ "migration.nls" "init.nls" "fishing.nls" ]
 extensions [ profiler ]
 
 
@@ -25,10 +27,24 @@ globals [
   traveling-patches          ; patches in-boundary?
   daily-death-rate
   offseason-death-rate
+  base-max-yield
+  boat-radius
+  catch-probability
 ]
 
 breed [ boats boat ]
 
+boats-own [
+  current-state
+  boat-total-fish ; the total number of fish that this boat has ever caught over all iterations
+  caught-0to4     ; the number of fish aged 0-4 that the boat caught on this iteration; resets to 0 after every tick (0 to 23 inches in length)
+  caught-5to9     ; the number of fish aged 4-9 that the boat caught on this iteration; resets to 0 after every tick (24 to 32 inches in length)
+  caught-10to14   ; the number of fish aged 19-14 that the boat caught on this iteration; resets to 0 after every tick (33 to 43 inches in length)
+  caught-15to19   ; the number of fish aged 15-19 that the boat caught on this iteration; resets to 0 after every tick (44 to 53 inches in length)
+  caught-20to24   ; the number of fish aged 20-24 that the boat caught on this iteration; resets to 0 after every tick (54 to 61 inches in length)
+  caught-25to29   ; the number of fish aged 25-29 that the boat caught on this iteration; resets to 0 after every tick (62 to 70 inches in length)
+  fish-caught     ; the total number of fish caught on this iteration; resets to 0 after every tick
+]
 
 patches-own [
   state
@@ -54,8 +70,9 @@ to setup
   reset-ticks
   import-pcolors "map2d-01.png"
   init-patches
-  import-pcolors "map1.png"
   init-globals
+  init-boats
+  import-pcolors "map1.png"
   init-fish ; eventually replace with normal-init-fish
   color-patches
   if profile? [
@@ -65,18 +82,18 @@ to setup
   ] ; exclusive time doesn't include subprocedure time
 end
 
+
 ; Observer context
 to move
-  ;show(f)
   ifelse day < 170 [ ; 170
     if profile? [profiler:start]
     set day day + 1
     color-patches
-    ;let fishies traveling-patches with [fish-on-patch > 0]
-    ;show fish-population
     daily-death
     migrate
-    ;show fish-population
+    fish-NJ
+
+    move-boats
     if profile? [
       profiler:stop
       print profiler:report
@@ -88,187 +105,55 @@ to move
     redistribute-fish
     offseason-death
     age-up
-
+    color-patches
   ]
 end
 
 
-; note: need to deal with mixed-color patches. resampling
 ; Observer context
-to init-patches
-  ask patches [
-    set zero-to-four 0
-    set five-to-nine 0
-    set ten-to-fourteen 0
-    set fifteen-to-nineteen 0
-    set twenty-to-twenty-four 0
-    set twenty-five-to-twenty-nine 0
-  ]
-  set-states
-  set-coast
-end
-
-
-; Observer context
-to set-states
-  ask patches [ set in-boundary? false ]
-;  ask patches with [pcolor = 5.6] [set state "land"]
-;  ask patches with [pcolor = 97.9] [set state "water"]
-;  ask patches with [pcolor = 26.9] [set state "ME"]
-;  ask patches with [pcolor = 67.8 ] [set state "NH"]
-;  ask patches with [pcolor = 63.2] [set state "RI"]
-;  ask patches with [pcolor = 15.7] [set state "MA"]
-;  ask patches with [pcolor = 45.6 ] [set state "NY"]
-;  ask patches with [pcolor = 114.2] [set state "CT"]
-;  ask patches with [pcolor = 15.6] [set state "NJ"]
-;  ask patches with [state = "ME" or state = "NH" or state = "RI" or state = "MA" or state = "NY" or state = "CT" or state = "NJ"] [ set in-boundary? true ]
-  ask patches with [pcolor = 5.6] [set state "land"]
-  ask patches with [pcolor = 108] [set state "water"] ;97.9
-  ask patches with [pcolor = 25.2] [set state "ME"] ;26.9
-  ask patches with [pcolor = 85.5] [set state "NH"] ;67.8
-  ask patches with [pcolor = 55.1] [set state "RI"] ; 63.2
-  ask patches with [pcolor = 125.1] [set state "MA"]  ;15.7
-  ask patches with [pcolor = 45.2 ] [set state "NY"] ; 45.6
-  ask patches with [pcolor = 115] [set state "CT"] ; 114.2
-  ask patches with [pcolor = 14.7] [set state "NJ"]  ;15.6
-  ask patches with [state = "ME" or state = "NH" or state = "RI" or state = "MA" or state = "NY" or state = "CT" or state = "NJ"] [ set in-boundary? true ]
-end
-
-
-to set-coast
-
-end
-
-; Observer context
-to init-globals
-  set day 0
-  set year 0
-  set min-window 0
-  set max-window 40
-  set distribution-variability 0.2
-  set traveling-patches patches with [in-boundary?]
-  set daily-death-rate 0.00055
-  set offseason-death-rate .107
-end
-
-
-; Observer context
-to init-fish
-  let npiw num-patches-in-window
-  let distribution round (approx-init-pop / npiw)
-  ask traveling-patches with [pxcor >= min-window and pxcor <= max-window and pycor < 138] [ ; delete pycor when map is fixed
-
-    let plus-minus random 2
-    ifelse plus-minus = 0 [
-      set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+to color-patches
+  ask traveling-patches with [fish-on-patch >= 0] [
+    if fish-on-patch = 0 [
+    set pcolor 97.9
     ]
-
-    set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    if fish-on-patch > 1 and fish-on-patch <= 10 [
+    set pcolor 96
     ]
-
-    set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    if fish-on-patch > 10 and fish-on-patch <= 100 [
+    set pcolor 106
     ]
-
-    set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    if fish-on-patch > 100 and fish-on-patch <= 1000 [
+    set pcolor 116
     ]
-
-    set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    if fish-on-patch > 1000 and fish-on-patch <= 10000 [
+    set pcolor 126
     ]
-
-    set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    if fish-on-patch > 100000 [
+    set pcolor 16
     ]
-
-    set total-fish fish-on-patch
   ]
 end
 
 
-; Distribute initial fish population throughout the starting patches (based on a normal distribution)
+
 ; Observer context
-to normal-init-fish
-  let npiw num-patches-in-window
-  let distribution floor (approx-init-pop / npiw)
-
-  repeat npiw [
-
-    let patch-to-fill patch random-normal 20 5 random-normal 130 5
-    while [[not in-boundary?] of patch-to-fill] [
-      set patch-to-fill patch random-normal 20 5 random-normal 130 5
-    ]
-
-    ask patch-to-fill [
-      let plus-minus random 2
-      ifelse plus-minus = 0 [
-        set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-      ][
-        set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
-      ]
-      set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
-    ]
-
-    set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
-    ]
-
-    set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
-    ]
-
-    set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
-    ]
-
-    set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
-    ]
-
-      set total-fish fish-on-patch
+to move-boats
+  ask boats [
+    let chosen-location one-of traveling-patches in-cone 3 180
+    face chosen-location
+    move-to chosen-location
+    update-state
   ]
-  ]
-
-  ; Call migrate once to spread out the normally-distributed fish
-  migrate
 end
 
 
+; Boat context
+to update-state
+  set current-state [state] of patch-here
+end
+
+
+; Observer context
 to redistribute-fish
   let piw patches-in-window
   ask traveling-patches with [fish-on-patch > 0][
@@ -362,145 +247,6 @@ to daily-death
 end
 
 
-; Observer context
-to migrate
-  ask traveling-patches with [total-fish > 0] [
-    let good-neighbors find-good-neighbors
-    ask good-neighbors [
-      migrate-zero-to-four
-      migrate-five-to-nine
-      migrate-ten-to-fourteen
-      migrate-fifteen-to-nineteen
-      migrate-twenty-to-twenty-four
-      migrate-twenty-four-to-twenty-nine
-      set total-fish fish-on-patch
-      ask myself [set total-fish fish-on-patch]
-    ]
-  ]
-end
-
-
-; Patch context
-to migrate-zero-to-four
-  let n-zero-to-four (random-float 0.2) * [zero-to-four] of myself
-  let frac-zero-to-four n-zero-to-four - (floor n-zero-to-four)
-  let floor-zero-to-four floor n-zero-to-four
-  let prob random-float 1
-  if prob < frac-zero-to-four [ set floor-zero-to-four floor-zero-to-four + 1 ]
-  set zero-to-four zero-to-four + floor-zero-to-four
-  ask myself [set zero-to-four zero-to-four - floor-zero-to-four]
-end
-
-
-; Patch context
-to migrate-five-to-nine
-  let n-five-to-nine (random-float 0.2) * [five-to-nine] of myself
-  let frac-five-to-nine n-five-to-nine - (floor n-five-to-nine)
-  let floor-five-to-nine floor n-five-to-nine
-  let prob random-float 1
-  if prob < frac-five-to-nine [ set floor-five-to-nine floor-five-to-nine + 1 ]
-  set five-to-nine five-to-nine + floor-five-to-nine
-  ask myself [set five-to-nine five-to-nine - floor-five-to-nine]
-end
-
-
-; Patch context
-to migrate-ten-to-fourteen
-  let n-ten-to-fourteen (random-float 0.2) * [ten-to-fourteen] of myself
-  let frac-ten-to-fourteen n-ten-to-fourteen - (floor n-ten-to-fourteen)
-  let floor-ten-to-fourteen floor n-ten-to-fourteen
-  let prob random-float 1
-  if prob < frac-ten-to-fourteen [ set floor-ten-to-fourteen floor-ten-to-fourteen + 1 ]
-  set ten-to-fourteen ten-to-fourteen + floor-ten-to-fourteen
-  ask myself [set ten-to-fourteen ten-to-fourteen - floor-ten-to-fourteen]
-end
-
-
-; Patch context
-to migrate-fifteen-to-nineteen
-  let n-fifteen-to-nineteen (random-float 0.2) * [fifteen-to-nineteen] of myself
-  let frac-fifteen-to-nineteen n-fifteen-to-nineteen - (floor n-fifteen-to-nineteen)
-  let floor-fifteen-to-nineteen floor n-fifteen-to-nineteen
-  let prob random-float 1
-  if prob < frac-fifteen-to-nineteen [ set floor-fifteen-to-nineteen floor-fifteen-to-nineteen + 1 ]
-  set fifteen-to-nineteen fifteen-to-nineteen + floor-fifteen-to-nineteen
-  ask myself [set fifteen-to-nineteen fifteen-to-nineteen - floor-fifteen-to-nineteen]
-end
-
-
-; Patch context
-to migrate-twenty-to-twenty-four
-  let n-twenty-to-twenty-four (random-float 0.2) * [twenty-to-twenty-four] of myself
-  let frac-twenty-to-twenty-four n-twenty-to-twenty-four - (floor n-twenty-to-twenty-four)
-  let floor-twenty-to-twenty-four floor n-twenty-to-twenty-four
-  let prob random-float 1
-  if prob < frac-twenty-to-twenty-four [ set floor-twenty-to-twenty-four floor-twenty-to-twenty-four + 1 ]
-  set twenty-to-twenty-four twenty-to-twenty-four + floor-twenty-to-twenty-four
-  ask myself [set twenty-to-twenty-four twenty-to-twenty-four - floor-twenty-to-twenty-four]
-end
-
-
-; Patch context
-to migrate-twenty-four-to-twenty-nine
-  let n-twenty-five-to-twenty-nine (random-float 0.2) * [twenty-five-to-twenty-nine] of myself
-  let frac-twenty-five-to-twenty-nine n-twenty-five-to-twenty-nine - (floor n-twenty-five-to-twenty-nine)
-  let floor-twenty-five-to-twenty-nine floor n-twenty-five-to-twenty-nine
-  let prob random-float 1
-  if prob < frac-twenty-five-to-twenty-nine [ set floor-twenty-five-to-twenty-nine floor-twenty-five-to-twenty-nine + 1 ]
-  set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + floor-twenty-five-to-twenty-nine
-  ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - floor-twenty-five-to-twenty-nine]
-end
-
-
-;pick nearest, not visited neighbor
-; list of coastal patches in increasing order
-;
-
-; Patch context
-to-report find-good-neighbors
-  let good-neighbors patches in-radius 8 with
-    [(pxcor = [pxcor] of myself or pxcor = [pxcor] of myself + 6 or pxcor = [pxcor] of myself + 8)
-      and (pycor = [pycor] of myself
-        or pycor = [pycor] of myself + 7
-        or pycor = [pycor] of myself - 7
-        or pycor = [pycor] of myself + 5
-        or pycor = [pycor] of myself - 5)
-      and in-boundary?] ;or pycor = [pycor] of myself + 1 or pycor = [pycor] of myself - 1)]
-  if not any? good-neighbors [ set good-neighbors patches in-radius 10 with
-    [pxcor <= [pxcor] of myself
-      and (pycor = [pycor] of myself
-        or pycor = [pycor] of myself + 10
-        or pycor = [pycor] of myself - 10
-      )
-      and in-boundary?]
-  ]
-  report good-neighbors
-end
-
-
-; Observer context
-to color-patches
-  ask traveling-patches with [fish-on-patch >= 0] [
-    if fish-on-patch = 0 [
-    set pcolor 97.9
-    ]
-    if fish-on-patch > 1 and fish-on-patch <= 10 [
-    set pcolor 96
-    ]
-    if fish-on-patch > 10 and fish-on-patch <= 100 [
-    set pcolor 106
-    ]
-    if fish-on-patch > 100 and fish-on-patch <= 1000 [
-    set pcolor 116
-    ]
-    if fish-on-patch > 1000 and fish-on-patch <= 10000 [
-    set pcolor 126
-    ]
-    if fish-on-patch > 100000 [
-    set pcolor 16
-    ]
-  ]
-end
 
 ; Patch context
 to-report fish-on-patch
@@ -560,6 +306,21 @@ end
 ;let taken-twenty-five-to-twenty-nine floor ((random-float 0.2) * [twenty-five-to-twenty-nine] of myself)
 ; set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + taken-twenty-five-to-twenty-nine
 ; ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - taken-twenty-five-to-twenty-nine]
+
+
+      ;if NJ-min <= 32 and NJ-min > 23 ; fish 5+ are fair game
+      ;if NJ-min <= 43 and NJ-min > 32 ; fish 10+ are fair game
+      ;if NJ-min <= 53 and NJ-min > 43 ; fish 15+ are fair game
+      ;if NJ-min <= 61 and NJ-min > 53 ; fish 20+ are fair game
+      ;if NJ-min <= 70 and NJ-min > 62 ; fish 25+ are fair game
+      ; NJ-max
+      ; NJ-num
+;  caught-0to4    ; 0 to 23 inches in length
+;  caught-5to9    ; 24 to 32 inches in length
+;  caught-10to14  ; 33 to 43 inches in length
+;  caught-15to19  ; 44 to 53 inches in length
+;  caught-20to24  ; 54 to 61 inches in length
+;  caught-25to29  ; 62 to 70 inches in length
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -589,10 +350,10 @@ ticks
 30.0
 
 BUTTON
-16
-102
-82
-135
+15
+95
+81
+128
 NIL
 setup
 NIL
@@ -606,10 +367,10 @@ NIL
 1
 
 SLIDER
-4
-62
-200
-95
+6
+49
+202
+82
 approx-init-pop
 approx-init-pop
 0
@@ -621,10 +382,10 @@ NIL
 HORIZONTAL
 
 BUTTON
-17
-142
-82
-175
+16
+135
+81
+168
 NIL
 move
 T
@@ -649,10 +410,10 @@ day
 11
 
 MONITOR
-1068
-65
-1178
-110
+1196
+14
+1315
+59
 NIL
 fish-population
 17
@@ -671,15 +432,328 @@ year
 11
 
 SWITCH
-90
-102
-193
-135
+89
+95
+192
+128
 profile?
 profile?
 0
 1
 -1000
+
+SLIDER
+6
+10
+201
+43
+num-boats
+num-boats
+0
+100
+50.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+142
+341
+275
+374
+NJ-min
+NJ-min
+0
+70
+0.0
+1
+1
+in
+HORIZONTAL
+
+TEXTBOX
+143
+324
+255
+342
+New Jersey regulations
+10
+0.0
+1
+
+PLOT
+1080
+75
+1309
+269
+plot 1
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot count turtles"
+
+SLIDER
+288
+341
+420
+374
+NY-min
+NY-min
+0
+70
+50.0
+1
+1
+in
+HORIZONTAL
+
+SLIDER
+431
+341
+562
+374
+CT-min
+CT-min
+0
+70
+49.0
+1
+1
+in
+HORIZONTAL
+
+SLIDER
+576
+341
+706
+374
+RI-min
+RI-min
+0
+70
+50.0
+1
+1
+in
+HORIZONTAL
+
+SLIDER
+718
+341
+848
+374
+MA-min
+MA-min
+0
+70
+50.0
+1
+1
+in
+HORIZONTAL
+
+SLIDER
+862
+340
+992
+373
+NH-min
+NH-min
+0
+70
+50.0
+1
+1
+in
+HORIZONTAL
+
+SLIDER
+1006
+340
+1136
+373
+ME-min
+ME-min
+0
+70
+50.0
+1
+1
+in
+HORIZONTAL
+
+TEXTBOX
+288
+323
+395
+341
+New York regulations
+10
+0.0
+1
+
+TEXTBOX
+431
+324
+550
+342
+Connecticut regulations
+10
+0.0
+1
+
+TEXTBOX
+575
+325
+696
+343
+Rhode Island regulations
+10
+0.0
+1
+
+TEXTBOX
+718
+325
+849
+343
+Massachusetts regulations
+10
+0.0
+1
+
+TEXTBOX
+861
+324
+996
+342
+New Hampshire regulations
+10
+0.0
+1
+
+TEXTBOX
+1008
+324
+1098
+342
+Maine regulations
+10
+0.0
+1
+
+SLIDER
+141
+380
+275
+413
+NJ-num
+NJ-num
+0
+5
+5.0
+1
+1
+fish/day
+HORIZONTAL
+
+SLIDER
+287
+381
+419
+414
+NY-num
+NY-num
+0
+5
+5.0
+1
+1
+fish/day
+HORIZONTAL
+
+SLIDER
+432
+382
+562
+415
+CT-num
+CT-num
+0
+5
+1.0
+1
+1
+fish/day
+HORIZONTAL
+
+SLIDER
+575
+382
+705
+415
+RI-num
+RI-num
+0
+5
+5.0
+1
+1
+fish/day
+HORIZONTAL
+
+SLIDER
+718
+383
+848
+416
+MA-num
+MA-num
+0
+5
+1.0
+1
+1
+fish/day
+HORIZONTAL
+
+SLIDER
+862
+383
+993
+416
+NH-num
+NH-num
+0
+5
+1.0
+1
+1
+fish/day
+HORIZONTAL
+
+SLIDER
+1006
+383
+1135
+416
+ME-num
+ME-num
+0
+5
+1.0
+1
+1
+fish/day
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -732,6 +806,11 @@ arrow
 true
 0
 Polygon -7500403 true true 150 0 0 150 105 150 105 293 195 293 195 150 300 150
+
+boat
+true
+4
+Polygon -1184463 true true 150 15 105 90 90 135 90 240 105 285 195 285 210 240 210 135 195 90 150 15 150 15
 
 box
 false

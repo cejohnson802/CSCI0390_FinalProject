@@ -1,0 +1,196 @@
+; Chloe Johnson and Anna Novak
+; Professor Dickerson
+; CSCI 0390
+; May 14, 2018
+
+
+; note: need to deal with mixed-color patches. resampling
+; Observer context
+to init-patches
+  ask patches [
+    set zero-to-four 0
+    set five-to-nine 0
+    set ten-to-fourteen 0
+    set fifteen-to-nineteen 0
+    set twenty-to-twenty-four 0
+    set twenty-five-to-twenty-nine 0
+  ]
+  set-states
+  set-coast
+end
+
+
+; Observer context
+to set-states
+  ask patches [ set in-boundary? false ]
+  ask patches with [pcolor = 5.6] [set state "land"]
+  ask patches with [pcolor = 108] [set state "water"] ;97.9
+  ask patches with [pcolor = 25.2] [set state "ME"] ;26.9
+  ask patches with [pcolor = 85.5] [set state "NH"] ;67.8
+  ask patches with [pcolor = 55.1] [set state "RI"] ; 63.2
+  ask patches with [pcolor = 125.1] [set state "MA"]  ;15.7
+  ask patches with [pcolor = 45.2 ] [set state "NY"] ; 45.6
+  ask patches with [pcolor = 115] [set state "CT"] ; 114.2
+  ask patches with [pcolor = 14.7] [set state "NJ"]  ;15.6
+  ask patches with [state = "ME" or state = "NH" or state = "RI" or state = "MA" or state = "NY" or state = "CT" or state = "NJ"] [ set in-boundary? true ]
+end
+
+
+to set-coast
+  
+end
+
+
+
+; Observer context
+to init-globals
+  set day 0
+  set year 0
+  set min-window 0
+  set max-window 40
+  set distribution-variability 0.2
+  set traveling-patches patches with [in-boundary?]
+  set daily-death-rate 0.00055
+  set offseason-death-rate .107
+  set base-max-yield 10000
+  set boat-radius 1
+  set catch-probability 0.5
+end
+
+
+
+; Observer context
+to init-boats
+  create-boats num-boats [
+    set shape "boat"
+    set size 10
+    move-to one-of traveling-patches
+    set color yellow
+    set current-state [state] of patch-here
+    set caught-0to4 0   ; 0 to 23 inches in length
+    set caught-5to9 0   ; 24 to 32 inches in length
+    set caught-10to14 0 ; 33 to 43 inches in length
+    set caught-15to19 0 ; 44 to 53 inches in length
+    set caught-20to24 0 ; 54 to 61 inches in length
+    set caught-25to29 0 ; 62 to 70 inches in length
+    set fish-caught 0
+  ]
+end
+
+
+
+; Observer context
+to init-fish
+  let npiw num-patches-in-window
+  let distribution round (approx-init-pop / npiw)
+  ask traveling-patches with [pxcor >= min-window and pxcor <= max-window and pycor < 138] [ ; delete pycor when map is fixed
+
+    let plus-minus random 2
+    ifelse plus-minus = 0 [
+      set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set total-fish fish-on-patch
+  ]
+end
+
+
+; Distribute initial fish population throughout the starting patches (based on a normal distribution)
+; Observer context
+to normal-init-fish
+  let npiw num-patches-in-window
+  let distribution floor (approx-init-pop / npiw)
+  
+  repeat npiw [
+    
+    let patch-to-fill patch random-normal 20 5 random-normal 130 5
+    while [[not in-boundary?] of patch-to-fill] [
+      set patch-to-fill patch random-normal 20 5 random-normal 130 5
+    ]
+    
+    ask patch-to-fill [
+      let plus-minus random 2
+      ifelse plus-minus = 0 [
+        set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+      ][
+        set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+      ]
+      set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+      set total-fish fish-on-patch
+  ]
+  ]
+
+  ; Call migrate once to spread out the normally-distributed fish
+  migrate
+end

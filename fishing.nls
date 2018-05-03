@@ -1,0 +1,483 @@
+; Chloe Johnson and Anna Novak
+; Professor Dickerson
+; CSCI 0390
+; May 14, 2018
+
+
+; Observer context
+to fish-NJ
+  ask boats with [current-state = "NJ" and [total-fish] of patch-here > 10] [
+;    let max-fish base-max-yield * NJ-num
+;    print(max-fish)
+    repeat NJ-num [
+      ask one-of patches in-radius boat-radius with [state = "NJ"] [
+      ;ask patches in-radius boat-radius [ ;in-radius boat-radius [
+        ifelse NJ-min <= 23 [; all ages of fish are fair game
+          catch-0to4
+          catch-5to9
+          catch-10to14
+          catch-15to19
+          catch-20to24
+          catch-25to29
+        ][
+          ifelse NJ-min <= 32 and NJ-min > 23 [; fish 5+ are fair game
+            catch-5to9
+            catch-10to14
+            catch-15to19
+            catch-20to24
+            catch-25to29
+          ][
+            ifelse NJ-min <= 43 and NJ-min > 32 [; fish 10+ are fair game
+              catch-10to14
+              catch-15to19
+              catch-20to24
+              catch-25to29
+            ][
+              ifelse NJ-min <= 53 and NJ-min > 43 [; fish 15+ are fair game
+                catch-15to19
+                catch-20to24
+                catch-25to29
+              ][
+                ifelse NJ-min <= 61 and NJ-min > 53 [; fish 20+ are fair game
+                  catch-20to24
+                  catch-25to29
+                ][
+                  ; fish 25+ are fair game
+                  catch-25to29
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+    set fish-caught fish-caught + caught-0to4 + caught-5to9 + caught-10to14 + caught-15to19 + caught-20to24 + caught-25to29
+    set boat-total-fish  boat-total-fish + fish-caught
+    set caught-0to4 0
+    set caught-5to9 0
+    set caught-10to14 0
+    set caught-15to19 0
+    set caught-20to24 0
+    set caught-25to29 0
+    set fish-caught 0
+  ]
+end
+
+
+; Observer context
+to fish-NY
+  ask boats with [current-state = "NY" and [total-fish] of patch-here > 10] [
+    repeat NY-num [
+      ask one-of patches in-radius boat-radius with [state = "NY"] [ ;in-radius boat-radius [
+        ifelse NY-min <= 23 [; all ages of fish are fair game
+          catch-0to4
+          catch-5to9
+          catch-10to14
+          catch-15to19
+          catch-20to24
+          catch-25to29
+        ][
+          ifelse NY-min <= 32 and NY-min > 23 [; fish 5+ are fair game
+            catch-5to9
+            catch-10to14
+            catch-15to19
+            catch-20to24
+            catch-25to29
+          ][
+            ifelse NY-min <= 43 and NY-min > 32 [; fish 10+ are fair game
+              catch-10to14
+              catch-15to19
+              catch-20to24
+              catch-25to29
+            ][
+              ifelse NY-min <= 53 and NY-min > 43 [; fish 15+ are fair game
+                catch-15to19
+                catch-20to24
+                catch-25to29
+              ][
+                ifelse NY-min <= 61 and NY-min > 53 [; fish 20+ are fair game
+                  catch-20to24
+                  catch-25to29
+                ][
+                  ; fish 25+ are fair game
+                  catch-25to29
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+    set fish-caught fish-caught + caught-0to4 + caught-5to9 + caught-10to14 + caught-15to19 + caught-20to24 + caught-25to29
+    set boat-total-fish  boat-total-fish + fish-caught
+    set caught-0to4 0
+    set caught-5to9 0
+    set caught-10to14 0
+    set caught-15to19 0
+    set caught-20to24 0
+    set caught-25to29 0
+    set fish-caught 0
+  ]
+end
+
+
+
+; Observer context
+to fish-CT
+  ask boats with [current-state = "CT" and [total-fish] of patch-here > 10] [
+    repeat CT-num [
+      ask one-of patches in-radius boat-radius with [state = "CT"] [ ;in-radius boat-radius [
+        ifelse CT-min <= 23 [; all ages of fish are fair game
+          catch-0to4
+          catch-5to9
+          catch-10to14
+          catch-15to19
+          catch-20to24
+          catch-25to29
+        ][
+          ifelse CT-min <= 32 and CT-min > 23 [; fish 5+ are fair game
+            catch-5to9
+            catch-10to14
+            catch-15to19
+            catch-20to24
+            catch-25to29
+          ][
+            ifelse CT-min <= 43 and CT-min > 32 [; fish 10+ are fair game
+              catch-10to14
+              catch-15to19
+              catch-20to24
+              catch-25to29
+            ][
+              ifelse CT-min <= 53 and CT-min > 43 [; fish 15+ are fair game
+                catch-15to19
+                catch-20to24
+                catch-25to29
+              ][
+                ifelse CT-min <= 61 and CT-min > 53 [; fish 20+ are fair game
+                  catch-20to24
+                  catch-25to29
+                ][
+                  ; fish 25+ are fair game
+                  catch-25to29
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+    set fish-caught fish-caught + caught-0to4 + caught-5to9 + caught-10to14 + caught-15to19 + caught-20to24 + caught-25to29
+    set boat-total-fish  boat-total-fish + fish-caught
+    set caught-0to4 0
+    set caught-5to9 0
+    set caught-10to14 0
+    set caught-15to19 0
+    set caught-20to24 0
+    set caught-25to29 0
+    set fish-caught 0
+  ]
+end
+
+
+
+
+; Observer context
+to fish-RI
+  ask boats with [current-state = "RI" and [total-fish] of patch-here > 10] [
+    repeat RI-num [
+      ask one-of patches in-radius boat-radius with [state = "RI"] [ ;in-radius boat-radius [
+        ifelse RI-min <= 23 [; all ages of fish are fair game
+          catch-0to4
+          catch-5to9
+          catch-10to14
+          catch-15to19
+          catch-20to24
+          catch-25to29
+        ][
+          ifelse RI-min <= 32 and RI-min > 23 [; fish 5+ are fair game
+            catch-5to9
+            catch-10to14
+            catch-15to19
+            catch-20to24
+            catch-25to29
+          ][
+            ifelse RI-min <= 43 and RI-min > 32 [; fish 10+ are fair game
+              catch-10to14
+              catch-15to19
+              catch-20to24
+              catch-25to29
+            ][
+              ifelse RI-min <= 53 and RI-min > 43 [; fish 15+ are fair game
+                catch-15to19
+                catch-20to24
+                catch-25to29
+              ][
+                ifelse RI-min <= 61 and RI-min > 53 [; fish 20+ are fair game
+                  catch-20to24
+                  catch-25to29
+                ][
+                  ; fish 25+ are fair game
+                  catch-25to29
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+    set fish-caught fish-caught + caught-0to4 + caught-5to9 + caught-10to14 + caught-15to19 + caught-20to24 + caught-25to29
+    set boat-total-fish  boat-total-fish + fish-caught
+    set caught-0to4 0
+    set caught-5to9 0
+    set caught-10to14 0
+    set caught-15to19 0
+    set caught-20to24 0
+    set caught-25to29 0
+    set fish-caught 0
+  ]
+end
+
+
+
+
+; Observer context
+to fish-MA
+  ask boats with [current-state = "MA" and [total-fish] of patch-here > 10] [
+    repeat MA-num [
+      ask one-of patches in-radius boat-radius with [state = "MA"] [ ;in-radius boat-radius [
+        ifelse MA-min <= 23 [; all ages of fish are fair game
+          catch-0to4
+          catch-5to9
+          catch-10to14
+          catch-15to19
+          catch-20to24
+          catch-25to29
+        ][
+          ifelse MA-min <= 32 and MA-min > 23 [; fish 5+ are fair game
+            catch-5to9
+            catch-10to14
+            catch-15to19
+            catch-20to24
+            catch-25to29
+          ][
+            ifelse MA-min <= 43 and MA-min > 32 [; fish 10+ are fair game
+              catch-10to14
+              catch-15to19
+              catch-20to24
+              catch-25to29
+            ][
+              ifelse MA-min <= 53 and MA-min > 43 [; fish 15+ are fair game
+                catch-15to19
+                catch-20to24
+                catch-25to29
+              ][
+                ifelse MA-min <= 61 and MA-min > 53 [; fish 20+ are fair game
+                  catch-20to24
+                  catch-25to29
+                ][
+                  ; fish 25+ are fair game
+                  catch-25to29
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+    set fish-caught fish-caught + caught-0to4 + caught-5to9 + caught-10to14 + caught-15to19 + caught-20to24 + caught-25to29
+    set boat-total-fish  boat-total-fish + fish-caught
+    set caught-0to4 0
+    set caught-5to9 0
+    set caught-10to14 0
+    set caught-15to19 0
+    set caught-20to24 0
+    set caught-25to29 0
+    set fish-caught 0
+  ]
+end
+
+
+
+
+; Observer context
+to fish-NH
+  ask boats with [current-state = "NH" and [total-fish] of patch-here > 10] [
+    repeat NH-num [
+      ask one-of patches in-radius boat-radius with [state = "NH"] [ ;in-radius boat-radius [
+        ifelse NH-min <= 23 [; all ages of fish are fair game
+          catch-0to4
+          catch-5to9
+          catch-10to14
+          catch-15to19
+          catch-20to24
+          catch-25to29
+        ][
+          ifelse NH-min <= 32 and NH-min > 23 [; fish 5+ are fair game
+            catch-5to9
+            catch-10to14
+            catch-15to19
+            catch-20to24
+            catch-25to29
+          ][
+            ifelse NH-min <= 43 and NH-min > 32 [; fish 10+ are fair game
+              catch-10to14
+              catch-15to19
+              catch-20to24
+              catch-25to29
+            ][
+              ifelse NH-min <= 53 and NH-min > 43 [; fish 15+ are fair game
+                catch-15to19
+                catch-20to24
+                catch-25to29
+              ][
+                ifelse NH-min <= 61 and NH-min > 53 [; fish 20+ are fair game
+                  catch-20to24
+                  catch-25to29
+                ][
+                  ; fish 25+ are fair game
+                  catch-25to29
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+    set fish-caught fish-caught + caught-0to4 + caught-5to9 + caught-10to14 + caught-15to19 + caught-20to24 + caught-25to29
+    set boat-total-fish  boat-total-fish + fish-caught
+    set caught-0to4 0
+    set caught-5to9 0
+    set caught-10to14 0
+    set caught-15to19 0
+    set caught-20to24 0
+    set caught-25to29 0
+    set fish-caught 0
+  ]
+end
+
+
+
+; Observer context
+to fish-ME
+  ask boats with [current-state = "ME" and [total-fish] of patch-here > 10] [
+    repeat ME-num [
+      ask one-of patches in-radius boat-radius with [state = "ME"] [ ;in-radius boat-radius [
+        ifelse ME-min <= 23 [; all ages of fish are fair game
+          catch-0to4
+          catch-5to9
+          catch-10to14
+          catch-15to19
+          catch-20to24
+          catch-25to29
+        ][
+          ifelse ME-min <= 32 and ME-min > 23 [; fish 5+ are fair game
+            catch-5to9
+            catch-10to14
+            catch-15to19
+            catch-20to24
+            catch-25to29
+          ][
+            ifelse ME-min <= 43 and ME-min > 32 [; fish 10+ are fair game
+              catch-10to14
+              catch-15to19
+              catch-20to24
+              catch-25to29
+            ][
+              ifelse ME-min <= 53 and ME-min > 43 [; fish 15+ are fair game
+                catch-15to19
+                catch-20to24
+                catch-25to29
+              ][
+                ifelse ME-min <= 61 and ME-min > 53 [; fish 20+ are fair game
+                  catch-20to24
+                  catch-25to29
+                ][
+                  ; fish 25+ are fair game
+                  catch-25to29
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+    set fish-caught fish-caught + caught-0to4 + caught-5to9 + caught-10to14 + caught-15to19 + caught-20to24 + caught-25to29
+    set boat-total-fish  boat-total-fish + fish-caught
+    set caught-0to4 0
+    set caught-5to9 0
+    set caught-10to14 0
+    set caught-15to19 0
+    set caught-20to24 0
+    set caught-25to29 0
+    set fish-caught 0
+  ]
+end
+
+
+
+
+; Patch context
+to catch-0to4
+  let n-zero-to-four (random-float catch-probability) * [zero-to-four] of myself
+  let frac-zero-to-four n-zero-to-four - (floor n-zero-to-four)
+  let floor-zero-to-four floor n-zero-to-four
+  let prob random-float 1
+  if prob < frac-zero-to-four [ set floor-zero-to-four floor-zero-to-four + 1 ]
+  set zero-to-four zero-to-four - floor-zero-to-four
+  ask myself [set caught-0to4 caught-0to4 + floor-zero-to-four]
+end
+
+; Patch context
+to catch-5to9
+  let n-five-to-nine (random-float catch-probability) * [five-to-nine] of myself
+  let frac-five-to-nine n-five-to-nine - (floor n-five-to-nine)
+  let floor-five-to-nine floor n-five-to-nine
+  let prob random-float 1
+  if prob < frac-five-to-nine [ set floor-five-to-nine floor-five-to-nine + 1 ]
+  set five-to-nine five-to-nine - floor-five-to-nine
+  ask myself [set caught-5to9 caught-5to9 + floor-five-to-nine]
+end
+
+; Patch context
+to catch-10to14
+  let n-ten-to-fourteen (random-float catch-probability) * [ten-to-fourteen] of myself
+  let frac-ten-to-fourteen n-ten-to-fourteen - (floor n-ten-to-fourteen)
+  let floor-ten-to-fourteen floor n-ten-to-fourteen
+  let prob random-float 1
+  if prob < frac-ten-to-fourteen [ set floor-ten-to-fourteen floor-ten-to-fourteen + 1 ]
+  set ten-to-fourteen ten-to-fourteen - floor-ten-to-fourteen
+  ask myself [set caught-10to14 caught-10to14 + floor-ten-to-fourteen]
+end
+
+; Patch context
+to catch-15to19
+  let n-fifteen-to-nineteen (random-float catch-probability) * [fifteen-to-nineteen] of myself
+  let frac-fifteen-to-nineteen n-fifteen-to-nineteen - (floor n-fifteen-to-nineteen)
+  let floor-fifteen-to-nineteen floor n-fifteen-to-nineteen
+  let prob random-float 1
+  if prob < frac-fifteen-to-nineteen [ set floor-fifteen-to-nineteen floor-fifteen-to-nineteen + 1 ]
+  set fifteen-to-nineteen fifteen-to-nineteen - floor-fifteen-to-nineteen
+  ask myself [set caught-15to19 caught-15to19 + floor-fifteen-to-nineteen]
+end
+
+; Patch context
+to catch-20to24
+  let n-twenty-to-twenty-four (random-float catch-probability) * [twenty-to-twenty-four] of myself
+  let frac-twenty-to-twenty-four n-twenty-to-twenty-four - (floor n-twenty-to-twenty-four)
+  let floor-twenty-to-twenty-four floor n-twenty-to-twenty-four
+  let prob random-float 1
+  if prob < frac-twenty-to-twenty-four [ set floor-twenty-to-twenty-four floor-twenty-to-twenty-four + 1 ]
+  set twenty-to-twenty-four twenty-to-twenty-four - floor-twenty-to-twenty-four
+  ask myself [set caught-20to24 caught-20to24 + floor-twenty-to-twenty-four]
+end
+
+; Patch-context
+to catch-25to29
+  let n-twenty-five-to-twenty-nine (random-float catch-probability) * [twenty-five-to-twenty-nine] of myself
+  let frac-twenty-five-to-twenty-nine n-twenty-five-to-twenty-nine - (floor n-twenty-five-to-twenty-nine)
+  let floor-twenty-five-to-twenty-nine floor n-twenty-five-to-twenty-nine
+  let prob random-float 1
+  if prob < frac-twenty-five-to-twenty-nine [ set floor-twenty-five-to-twenty-nine floor-twenty-five-to-twenty-nine + 1 ]
+  set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - floor-twenty-five-to-twenty-nine
+  ask myself [set caught-25to29 caught-25to29 + floor-twenty-five-to-twenty-nine]
+end
