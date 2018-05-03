@@ -67,7 +67,6 @@ patches-own [
 to setup
   ca
   ;if profile? [profiler:start] ; call the start procedure within the profiler extension
-  reset-ticks
   import-pcolors "map2d-01.png"
   init-patches
   init-globals
@@ -80,6 +79,7 @@ to setup
     print profiler:report
     profiler:reset
   ] ; exclusive time doesn't include subprocedure time
+  reset-ticks
 end
 
 
@@ -92,7 +92,12 @@ to move
     daily-death
     migrate
     fish-NJ
-
+    fish-NY
+    fish-CT
+    fish-RI
+    fish-MA
+    fish-NH
+    fish-ME
     move-boats
     if profile? [
       profiler:stop
@@ -107,6 +112,7 @@ to move
     age-up
     color-patches
   ]
+  tick
 end
 
 
@@ -375,16 +381,16 @@ approx-init-pop
 approx-init-pop
 0
 10000000
-4200000.0
+8120000.0
 10000
 1
 NIL
 HORIZONTAL
 
 BUTTON
-16
+15
 135
-81
+80
 168
 NIL
 move
@@ -410,10 +416,10 @@ day
 11
 
 MONITOR
-1196
-14
-1315
-59
+1189
+12
+1322
+57
 NIL
 fish-population
 17
@@ -421,10 +427,10 @@ fish-population
 11
 
 MONITOR
-1131
-13
-1188
-58
+1128
+12
+1185
+57
 NIL
 year
 17
@@ -450,8 +456,8 @@ SLIDER
 num-boats
 num-boats
 0
-100
-50.0
+250
+142.0
 1
 1
 NIL
@@ -483,13 +489,13 @@ New Jersey regulations
 1
 
 PLOT
-1080
+1066
 75
-1309
-269
-plot 1
-NIL
-NIL
+1391
+311
+Atlantic Striped Bass Population over Time
+days
+fish population
 0.0
 10.0
 0.0
@@ -498,7 +504,7 @@ true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot count turtles"
+"fish" 1.0 0 -8053223 true "" "plot fish-population"
 
 SLIDER
 288
@@ -509,7 +515,7 @@ NY-min
 NY-min
 0
 70
-50.0
+0.0
 1
 1
 in
@@ -754,6 +760,153 @@ ME-num
 1
 fish/day
 HORIZONTAL
+
+BUTTON
+152
+430
+261
+463
+NIL
+add-NJ-boat
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+301
+431
+410
+464
+NIL
+add-NY-boat
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+441
+432
+551
+465
+NIL
+add-CT-boat
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+587
+433
+696
+466
+NIL
+add-RI-boat
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+728
+433
+838
+466
+NIL
+add-MA-boat
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+873
+433
+984
+466
+NIL
+add-NH-boat
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+1014
+433
+1125
+466
+NIL
+add-ME-boat
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+16
+182
+190
+215
+NIL
+remove-all-boats
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+MONITOR
+1327
+12
+1392
+57
+boats
+count boats
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?

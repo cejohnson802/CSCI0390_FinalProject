@@ -3,6 +3,144 @@
 ; CSCI 0390
 ; May 14, 2018
 
+; Observer context
+to remove-all-boats
+  
+end
+
+
+; Observer context
+to add-NJ-boat
+  create-boats 1 [
+    set shape "boat"
+    set size 10
+    move-to one-of traveling-patches with [state = "NJ"]
+    set color yellow
+    set current-state [state] of patch-here
+    set caught-0to4 0   ; 0 to 23 inches in length
+    set caught-5to9 0   ; 24 to 32 inches in length
+    set caught-10to14 0 ; 33 to 43 inches in length
+    set caught-15to19 0 ; 44 to 53 inches in length
+    set caught-20to24 0 ; 54 to 61 inches in length
+    set caught-25to29 0 ; 62 to 70 inches in length
+    set fish-caught 0
+  ]
+end
+
+
+; Observer context
+to add-NY-boat
+  create-boats 1 [
+    set shape "boat"
+    set size 10
+    move-to one-of traveling-patches with [state = "NY"]
+    set color yellow
+    set current-state [state] of patch-here
+    set caught-0to4 0   ; 0 to 23 inches in length
+    set caught-5to9 0   ; 24 to 32 inches in length
+    set caught-10to14 0 ; 33 to 43 inches in length
+    set caught-15to19 0 ; 44 to 53 inches in length
+    set caught-20to24 0 ; 54 to 61 inches in length
+    set caught-25to29 0 ; 62 to 70 inches in length
+    set fish-caught 0
+  ]
+end
+
+
+; Observer context
+to add-CT-boat
+  create-boats 1 [
+    set shape "boat"
+    set size 10
+    move-to one-of traveling-patches with [state = "CT"]
+    set color yellow
+    set current-state [state] of patch-here
+    set caught-0to4 0   ; 0 to 23 inches in length
+    set caught-5to9 0   ; 24 to 32 inches in length
+    set caught-10to14 0 ; 33 to 43 inches in length
+    set caught-15to19 0 ; 44 to 53 inches in length
+    set caught-20to24 0 ; 54 to 61 inches in length
+    set caught-25to29 0 ; 62 to 70 inches in length
+    set fish-caught 0
+  ]
+end
+
+
+; Observer context
+to add-RI-boat
+  create-boats 1 [
+    set shape "boat"
+    set size 10
+    move-to one-of traveling-patches with [state = "RI"]
+    set color yellow
+    set current-state [state] of patch-here
+    set caught-0to4 0   ; 0 to 23 inches in length
+    set caught-5to9 0   ; 24 to 32 inches in length
+    set caught-10to14 0 ; 33 to 43 inches in length
+    set caught-15to19 0 ; 44 to 53 inches in length
+    set caught-20to24 0 ; 54 to 61 inches in length
+    set caught-25to29 0 ; 62 to 70 inches in length
+    set fish-caught 0
+  ]
+end
+
+
+; Observer context
+to add-MA-boat
+  create-boats 1 [
+    set shape "boat"
+    set size 10
+    move-to one-of traveling-patches with [state = "MA"]
+    set color yellow
+    set current-state [state] of patch-here
+    set caught-0to4 0   ; 0 to 23 inches in length
+    set caught-5to9 0   ; 24 to 32 inches in length
+    set caught-10to14 0 ; 33 to 43 inches in length
+    set caught-15to19 0 ; 44 to 53 inches in length
+    set caught-20to24 0 ; 54 to 61 inches in length
+    set caught-25to29 0 ; 62 to 70 inches in length
+    set fish-caught 0
+  ]
+end
+
+
+; Observer context
+to add-NH-boat
+  create-boats 1 [
+    set shape "boat"
+    set size 10
+    move-to one-of traveling-patches with [state = "NH"]
+    set color yellow
+    set current-state [state] of patch-here
+    set caught-0to4 0   ; 0 to 23 inches in length
+    set caught-5to9 0   ; 24 to 32 inches in length
+    set caught-10to14 0 ; 33 to 43 inches in length
+    set caught-15to19 0 ; 44 to 53 inches in length
+    set caught-20to24 0 ; 54 to 61 inches in length
+    set caught-25to29 0 ; 62 to 70 inches in length
+    set fish-caught 0
+  ]
+end
+
+
+; Observer context
+to add-ME-boat
+  create-boats 1 [
+    set shape "boat"
+    set size 10
+    move-to one-of traveling-patches with [state = "ME"]
+    set color yellow
+    set current-state [state] of patch-here
+    set caught-0to4 0   ; 0 to 23 inches in length
+    set caught-5to9 0   ; 24 to 32 inches in length
+    set caught-10to14 0 ; 33 to 43 inches in length
+    set caught-15to19 0 ; 44 to 53 inches in length
+    set caught-20to24 0 ; 54 to 61 inches in length
+    set caught-25to29 0 ; 62 to 70 inches in length
+    set fish-caught 0
+  ]
+end
+
 
 ; Observer context
 to fish-NJ
