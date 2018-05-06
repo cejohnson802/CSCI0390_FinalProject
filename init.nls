@@ -7,7 +7,7 @@
 ; note: need to deal with mixed-color patches. resampling
 ; Observer context
 to init-patches
-  ask patches [
+  ask patches [              
     set zero-to-four 0
     set five-to-nine 0
     set ten-to-fourteen 0
@@ -20,25 +20,53 @@ to init-patches
 end
 
 
+; Assign all patches a state according to the background image
 ; Observer context
 to set-states
-  ask patches [ set in-boundary? false ]
-  ask patches with [pcolor = 5.6] [set state "land"]
-  ask patches with [pcolor = 108] [set state "water"] ;97.9
-  ask patches with [pcolor = 25.2] [set state "ME"] ;26.9
-  ask patches with [pcolor = 85.5] [set state "NH"] ;67.8
-  ask patches with [pcolor = 55.1] [set state "RI"] ; 63.2
-  ask patches with [pcolor = 125.1] [set state "MA"]  ;15.7
-  ask patches with [pcolor = 45.2 ] [set state "NY"] ; 45.6
-  ask patches with [pcolor = 115] [set state "CT"] ; 114.2
-  ask patches with [pcolor = 14.7] [set state "NJ"]  ;15.6
-  ask patches with [state = "ME" or state = "NH" or state = "RI" or state = "MA" or state = "NY" or state = "CT" or state = "NJ"] [ set in-boundary? true ]
+  ask patches [
+    ifelse pcolor > 5 and pcolor < 7 and count neighbors4 with [pcolor > 7 ] < 3 [set state "land"][
+      ifelse pcolor >= 107 and pcolor < 109 [set state "water"][
+        ifelse pcolor > 25 and pcolor < 37 and not any? neighbors4 with [pcolor = 14.7 or pcolor = 45.2 ][set state "ME"][
+          ifelse pcolor > 75 and pcolor < 86 [ set state "NH"][
+            ifelse pcolor > 125 and pcolor < 136 and not any? neighbors4 with [pcolor = 14.7][set state "MA"][
+              ifelse  pcolor > 55 and pcolor < 57 [set state "RI"][
+                ifelse pcolor >= 115 and pcolor < 117 and not any? neighbors4 with [pcolor = 125.1][set state "CT"][
+                  ifelse pcolor > 37 and pcolor < 47 [set state "NY"][
+                    ifelse pcolor > 14 and pcolor < 17 and not any? neighbors4 with [pcolor = 25.2][set state "NJ"][
+                    ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+  ]
+   ask patches with [state = 0][handle-stateless]
 end
 
 
+; Handle transition colors
+; Patch context
+to handle-stateless
+    set state [state] of one-of neighbors4 with [state != 0]
+end
+
+
+; Observer context
 to set-coast
-  
+  let land-patches patches with [state = "land"]
+  ask land-patches [
+    ; Note: ideally this would just be in-boundary?. A few patches off of Maine were labelled "water".
+    ifelse any? neighbors with [in-boundary? = true or state = "water"][
+      set coastline? true
+    ][
+      set coastline? false
+    ]
+  ]
 end
+
 
 
 

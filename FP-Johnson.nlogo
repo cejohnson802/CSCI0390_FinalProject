@@ -67,7 +67,7 @@ patches-own [
 to setup
   ca
   ;if profile? [profiler:start] ; call the start procedure within the profiler extension
-  import-pcolors "map2d-01.png"
+  import-pcolors "map2e.png"
   init-patches
   init-globals
   init-boats
