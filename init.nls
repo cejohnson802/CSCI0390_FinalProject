@@ -14,9 +14,14 @@ to init-patches
     set fifteen-to-nineteen 0
     set twenty-to-twenty-four 0
     set twenty-five-to-twenty-nine 0
+    set in-boundary? false
+    set coastline? false
+    set coast-num 0
+    set visited? false
   ]
   set-states
   set-coast
+  set-closest
 end
 
 
@@ -43,7 +48,8 @@ to set-states
     ]
   ]
   ]
-   ask patches with [state = 0][handle-stateless]
+  ask patches with [state = 0][handle-stateless]
+  ask patches with [state = "ME" or state = "NH" or state = "RI" or state = "MA" or state = "NY" or state = "CT" or state = "NJ"] [ set in-boundary? true ]
 end
 
 
@@ -58,11 +64,92 @@ end
 to set-coast
   let land-patches patches with [state = "land"]
   ask land-patches [
-    ; Note: ideally this would just be in-boundary?. A few patches off of Maine were labelled "water".
+    ; Note: ideally this would just be in-boundary?. A few patches off of Maine were labeled "water".
     ifelse any? neighbors with [in-boundary? = true or state = "water"][
       set coastline? true
     ][
       set coastline? false
+    ]
+  ]
+  clean-coastline
+  remove-doubles
+  clean-coastline
+  set-default-coast
+  remove-doubles
+  let max-coast 0
+  coast-numbers (patch 0 140) max-coast
+  set coastal-patches patches with [coast-num > 0]
+end
+
+; Observer context
+to set-closest
+  set traveling-patches patches with [in-boundary?]
+  ask traveling-patches [
+    set closest-coast [coast-num] of (min-one-of coastal-patches [distance myself])
+  ]
+end
+
+
+; Observer context
+to clean-coastline
+  ask patches with [coastline?] [
+    if count neighbors4 with [coastline?] = 1 [set coastline? false]
+  ]
+end
+
+; Observer context
+to remove-doubles
+  ask patches with [coastline?][
+    ; if you have a neighbor above you, to the right of you, and to the diagonal right, set your own coastline? to false
+    if [coastline?] of patch (pxcor) (pycor + 1) and [coastline?] of patch (pxcor + 1) (pycor) and [coastline?] of patch (pxcor + 1) (pycor + 1) [
+      set coastline? false
+    ]
+  ]
+end
+
+; Observer context
+to set-default-coast
+  ask patch 0 140 [set coastline? true]
+  ask patch 1 140 [set coastline? true]
+  ask patch 2 140 [set coastline? true]
+  ask patch 2 139 [set coastline? true]
+  ask patch 2 138 [set coastline? true]
+  ask patch 3 138 [set coastline? true]
+  ask patch 4 138 [set coastline? true]
+  ask patch 5 138 [set coastline? true]
+  ask patch 470 144 [set coastline? true]
+  ask patch 470 145 [set coastline? true]
+  ask patch 470 146 [set coastline? true]
+  ask patch 470 147 [set coastline? true]
+  ask patch 470 148 [set coastline? true]
+  ask patch 471 148 [set coastline? true]
+  ask patch 472 148 [set coastline? true]
+  ask patch 473 148 [set coastline? true]
+  ask patch 474 148 [set coastline? true]
+  ask patch 474 147 [set coastline? true]
+  ask patch 830 255 [set coastline? true]
+  ask patch 831 255 [set coastline? true]
+  ask patch 832 255 [set coastline? true]
+  ask patch 833 255 [set coastline? true]
+  ask patch 309 146 [set coastline? false]
+  ask patch 310 147 [set coastline? false]
+  ask patch 472 147 [set coastline? false]
+  ask patch 830 256 [set coastline? false]
+  ask patch 831 256 [set coastline? false]
+  ask patch 832 256 [set coastline? false]
+  ask patch 833 256 [set coastline? false]
+end
+
+; Observer context
+to coast-numbers [my-patch current-num]
+  ;print(my-patch)
+  ask my-patch [ 
+    set coast-num current-num
+    set visited? true
+    set current-num current-num + 1
+    if my-patch != patch 832 255 [
+      let next-patch one-of neighbors4 with [ not visited? and coastline? ]
+      coast-numbers next-patch current-num
     ]
   ]
 end
@@ -77,12 +164,13 @@ to init-globals
   set min-window 0
   set max-window 40
   set distribution-variability 0.2
-  set traveling-patches patches with [in-boundary?]
+  ;set traveling-patches patches with [in-boundary?]
   set daily-death-rate 0.00055
   set offseason-death-rate .107
   set base-max-yield 10000
   set boat-radius 1
   set catch-probability 0.5
+  set migratory-distribution-variability 0.5
 end
 
 

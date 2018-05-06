@@ -5,9 +5,33 @@
 
 
 ; Observer context
+;to migrate
+;  ask traveling-patches with [total-fish > 0] [
+;    let good-neighbors find-good-neighbors
+;    ask good-neighbors [
+;      migrate-zero-to-four
+;      migrate-five-to-nine
+;      migrate-ten-to-fourteen
+;      migrate-fifteen-to-nineteen
+;      migrate-twenty-to-twenty-four      
+;      migrate-twenty-four-to-twenty-nine
+;      set total-fish fish-on-patch
+;      ask myself [set total-fish fish-on-patch]
+;    ]
+;  ]
+;end
+
+
 to migrate
   ask traveling-patches with [total-fish > 0] [
-    let good-neighbors find-good-neighbors
+    let good-neighbors traveling-patches in-radius 4 with [
+      (closest-coast > [closest-coast] of myself and closest-coast < [closest-coast] of myself + 4) or 
+      ((pxcor = [pxcor] of myself or pxcor = [pxcor] of myself + 4 or pxcor = [pxcor] of myself + 4)
+      and (pycor = [pycor] of myself
+        or pycor = [pycor] of myself + 3
+        or pycor = [pycor] of myself - 3))]
+    ;or closest-coast = [closest-coast] of myself]
+    ;let good-neighbors traveling-patches with [closest-coast > [closest-coast] of myself and (closest-coast < [closest-coast] of myself + 10)]
     ask good-neighbors [
       migrate-zero-to-four
       migrate-five-to-nine
@@ -18,13 +42,12 @@ to migrate
       set total-fish fish-on-patch
       ask myself [set total-fish fish-on-patch]
     ]
-  ]
+  ]  
 end
-
 
 ; Patch context
 to migrate-zero-to-four
-  let n-zero-to-four (random-float 0.2) * [zero-to-four] of myself
+  let n-zero-to-four (random-float migratory-distribution-variability) * [zero-to-four] of myself
   let frac-zero-to-four n-zero-to-four - (floor n-zero-to-four)
   let floor-zero-to-four floor n-zero-to-four
   let prob random-float 1
@@ -36,7 +59,7 @@ end
 
 ; Patch context
 to migrate-five-to-nine
-  let n-five-to-nine (random-float 0.2) * [five-to-nine] of myself
+  let n-five-to-nine (random-float migratory-distribution-variability) * [five-to-nine] of myself
   let frac-five-to-nine n-five-to-nine - (floor n-five-to-nine)
   let floor-five-to-nine floor n-five-to-nine
   let prob random-float 1
@@ -48,7 +71,7 @@ end
 
 ; Patch context
 to migrate-ten-to-fourteen
-  let n-ten-to-fourteen (random-float 0.2) * [ten-to-fourteen] of myself
+  let n-ten-to-fourteen (random-float migratory-distribution-variability) * [ten-to-fourteen] of myself
   let frac-ten-to-fourteen n-ten-to-fourteen - (floor n-ten-to-fourteen)
   let floor-ten-to-fourteen floor n-ten-to-fourteen
   let prob random-float 1
@@ -60,7 +83,7 @@ end
 
 ; Patch context
 to migrate-fifteen-to-nineteen
-  let n-fifteen-to-nineteen (random-float 0.2) * [fifteen-to-nineteen] of myself
+  let n-fifteen-to-nineteen (random-float migratory-distribution-variability) * [fifteen-to-nineteen] of myself
   let frac-fifteen-to-nineteen n-fifteen-to-nineteen - (floor n-fifteen-to-nineteen)
   let floor-fifteen-to-nineteen floor n-fifteen-to-nineteen
   let prob random-float 1
@@ -72,7 +95,7 @@ end
 
 ; Patch context
 to migrate-twenty-to-twenty-four
-  let n-twenty-to-twenty-four (random-float 0.2) * [twenty-to-twenty-four] of myself
+  let n-twenty-to-twenty-four (random-float migratory-distribution-variability) * [twenty-to-twenty-four] of myself
   let frac-twenty-to-twenty-four n-twenty-to-twenty-four - (floor n-twenty-to-twenty-four)
   let floor-twenty-to-twenty-four floor n-twenty-to-twenty-four
   let prob random-float 1
@@ -84,7 +107,7 @@ end
 
 ; Patch context
 to migrate-twenty-four-to-twenty-nine
-  let n-twenty-five-to-twenty-nine (random-float 0.2) * [twenty-five-to-twenty-nine] of myself
+  let n-twenty-five-to-twenty-nine (random-float migratory-distribution-variability) * [twenty-five-to-twenty-nine] of myself
   let frac-twenty-five-to-twenty-nine n-twenty-five-to-twenty-nine - (floor n-twenty-five-to-twenty-nine)
   let floor-twenty-five-to-twenty-nine floor n-twenty-five-to-twenty-nine
   let prob random-float 1
