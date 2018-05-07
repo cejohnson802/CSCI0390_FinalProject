@@ -145,11 +145,8 @@ end
 ; Observer context
 to fish-NJ
   ask boats with [current-state = "NJ" and [total-fish] of patch-here > 10] [
-;    let max-fish base-max-yield * NJ-num
-;    print(max-fish)
     repeat NJ-num [
       ask one-of patches in-radius boat-radius with [state = "NJ"] [
-      ;ask patches in-radius boat-radius [ ;in-radius boat-radius [
         ifelse NJ-min <= 23 [; all ages of fish are fair game
           catch-0to4
           catch-5to9

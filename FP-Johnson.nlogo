@@ -3,41 +3,33 @@
 ; CSCI 0390
 ; May 14, 2018
 
-; 1. How to get around Massachusetts?
-; 2. How to speed up our migration?
-; 3.
+; We have neither given nor received unauthorized aid on this assignment. Chloe Johnson and Anna Novak
 
-
-; interface
-; approx-init-pop
-
-; Profiler
-; extension, not part of core code
-
-__includes [ "migration.nls" "init.nls" "fishing.nls" ]
+__includes [ "migration.nls" "fishing.nls" ]
 extensions [ profiler ]
 
 
+; ------------- BREEDS, GLOBAL & INSTANCE VARIABLES -------------
+
 globals [
-  day
-  year
-  min-window
-  max-window
-  distribution-variability
-  traveling-patches          ; patches in-boundary?
-  daily-death-rate
-  offseason-death-rate
-  base-max-yield
-  boat-radius
-  catch-probability
-  coastal-patches
-  migratory-distribution-variability
+  day                        ; the current day
+  year                       ; the current year
+  min-window                 ; the minimum initial pxcor for the fish to occupy
+  max-window                 ; the maximum initial pxcor for the fish to occupy
+  distribution-variability   ; how much variability in distribution of fish a single patch during initialization
+  traveling-patches          ; the patches in-boundary?
+  daily-death-rate           ; the death rate that all fish experience each day in-season (i.e. on each tick)
+  offseason-death-rate       ; the death rate that all fish experience in total during the off-season
+  boat-radius                ; the radius of patches in which a boat can catch fish
+  catch-probability          ; the probability of catching fish on that patch (used in each age group)
+  coastal-patches            ; the patches that make up the coastline
+  migratory-distribution-variability ; the maximum percentage of fish that can migrate (used in each age group)
 ]
 
-breed [ boats boat ]
+breed [ boats boat ] ; a new breed that can travel through traveling-patches and catch fish
 
 boats-own [
-  current-state
+  current-state   ; the current state through which the boat is traveling
   boat-total-fish ; the total number of fish that this boat has ever caught over all iterations
   caught-0to4     ; the number of fish aged 0-4 that the boat caught on this iteration; resets to 0 after every tick (0 to 23 inches in length)
   caught-5to9     ; the number of fish aged 4-9 that the boat caught on this iteration; resets to 0 after every tick (24 to 32 inches in length)
@@ -49,38 +41,39 @@ boats-own [
 ]
 
 patches-own [
-  state
-  in-boundary?
-  zero-to-four
-  five-to-nine
-  ten-to-fourteen
-  fifteen-to-nineteen
-  twenty-to-twenty-four
-  twenty-five-to-twenty-nine
-  total-fish
-  visited?
-  coastline?
-  coast-num
-  closest-coast
+  state                       ; the state that the patch exists in; "land" or "water" if not a traveling patch, a state code otherwise (e.g. "CT")
+  in-boundary?                ; true if the patch is within the US maritime boundary (water), false otherwise
+  zero-to-four                ; the number of fish on the patch aged 0 to 4
+  five-to-nine                ; the number of fish on the patch aged 5 to 9
+  ten-to-fourteen             ; the number of fish on the patch aged 10 to 14
+  fifteen-to-nineteen         ; the number of fish on the patch aged 15 to 19
+  twenty-to-twenty-four       ; the number of fish on the patch aged 20 to 24
+  twenty-five-to-twenty-nine  ; the number of fish on the patch aged 25 to 29
+  total-fish                  ; the total fish on the patch
+  visited?                    ; true if this patch has been considered in the coastline search, false otherwise (only matters for patches along the coast)
+  coastline?                  ; true if this patch is a coastline patch, false otherwise (used for migration)
+  coast-num                   ; 0 if the patch is not a member of the coastline, >0 if the patch is on the coastline; patches increase sequentially in coast-num from NJ to ME
+  closest-coast               ; 0 if the patch is not a traveling-patch; if the patch is a traveling patch, then this variable holds the coast-num of the closest coastline patch
 ]
 
+
+; ------------- SETUP AND MOVE PROCEDURES -------------
 
 ; Observer context
 to setup
   ca
-  ;if profile? [profiler:start] ; call the start procedure within the profiler extension
   import-pcolors "map2e.png"
   init-patches
   init-globals
   init-boats
   import-pcolors "map1.png"
-  init-fish ; eventually replace with normal-init-fish
+  init-fish
   color-patches
   if profile? [
     profiler:stop
     print profiler:report
     profiler:reset
-  ] ; exclusive time doesn't include subprocedure time
+  ]
   reset-ticks
 end
 
@@ -121,6 +114,10 @@ to move
   ]
   tick
 end
+
+; ------------- OBSERVER PROCEDURES -------------
+; ------------- PATCH PROCEDURES -------------
+; ------------- BOAT PROCEDURES -------------
 
 
 ; Observer context
@@ -290,15 +287,17 @@ to-report fish-population
   report total
 end
 
+; Observer context
 to-report num-patches-in-window
   report count traveling-patches with [pxcor >= min-window and pxcor <= max-window and pycor < 138] ;remove 138
 end
 
+; Observer context
 to-report patches-in-window
   report traveling-patches with [pxcor >= min-window and pxcor <= max-window and pycor < 138] ;remove 138
 end
 
-
+; Observer context
 to reduce-patches
   ask traveling-patches with [total-fish > 0] [
     ask one-of neighbors with [in-boundary?] [
@@ -319,38 +318,248 @@ to reduce-patches
     set total-fish 0
   ]
 end
-; NOTES
-; let n = p * x
-; let n-frac = n - floor n
-; let n floor r
-; take an additional fish with probability n-frac
 
 
-;; Observer context
-;to update-window
-;  set min-window min-window + 4
-;  set max-window max-window + 4
-;end
+; note: need to deal with mixed-color patches. resampling
+; Observer context
+to init-patches
+  ask patches [
+    set zero-to-four 0
+    set five-to-nine 0
+    set ten-to-fourteen 0
+    set fifteen-to-nineteen 0
+    set twenty-to-twenty-four 0
+    set twenty-five-to-twenty-nine 0
+    set in-boundary? false
+    set coastline? false
+    set coast-num 0
+    set visited? false
+  ]
+  set-states
+  set-coast
+  set-closest
+end
 
 
-;let taken-twenty-five-to-twenty-nine floor ((random-float 0.2) * [twenty-five-to-twenty-nine] of myself)
-; set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + taken-twenty-five-to-twenty-nine
-; ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - taken-twenty-five-to-twenty-nine]
+; Assign all patches a state according to the background image
+; Observer context
+to set-states
+  ask patches [
+    ifelse pcolor > 5 and pcolor < 7 and count neighbors4 with [pcolor > 7 ] < 3 [set state "land"][
+      ifelse pcolor >= 107 and pcolor < 109 [set state "water"][
+        ifelse pcolor > 25 and pcolor < 37 and not any? neighbors4 with [pcolor = 14.7 or pcolor = 45.2 ][set state "ME"][
+          ifelse pcolor > 75 and pcolor < 86 [ set state "NH"][
+            ifelse pcolor > 125 and pcolor < 136 and not any? neighbors4 with [pcolor = 14.7][set state "MA"][
+              ifelse  pcolor > 55 and pcolor < 57 [set state "RI"][
+                ifelse pcolor >= 115 and pcolor < 117 and not any? neighbors4 with [pcolor = 125.1][set state "CT"][
+                  ifelse pcolor > 37 and pcolor < 47 [set state "NY"][
+                    ifelse pcolor > 14 and pcolor < 17 and not any? neighbors4 with [pcolor = 25.2][set state "NJ"][
+                    ]
+                ]
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]
+  ]
+  ]
+  ask patches with [state = 0][handle-stateless]
+  ask patches with [state = "ME" or state = "NH" or state = "RI" or state = "MA" or state = "NY" or state = "CT" or state = "NJ"] [ set in-boundary? true ]
+end
 
 
-      ;if NJ-min <= 32 and NJ-min > 23 ; fish 5+ are fair game
-      ;if NJ-min <= 43 and NJ-min > 32 ; fish 10+ are fair game
-      ;if NJ-min <= 53 and NJ-min > 43 ; fish 15+ are fair game
-      ;if NJ-min <= 61 and NJ-min > 53 ; fish 20+ are fair game
-      ;if NJ-min <= 70 and NJ-min > 62 ; fish 25+ are fair game
-      ; NJ-max
-      ; NJ-num
-;  caught-0to4    ; 0 to 23 inches in length
-;  caught-5to9    ; 24 to 32 inches in length
-;  caught-10to14  ; 33 to 43 inches in length
-;  caught-15to19  ; 44 to 53 inches in length
-;  caught-20to24  ; 54 to 61 inches in length
-;  caught-25to29  ; 62 to 70 inches in length
+; Handle transition colors
+; Patch context
+to handle-stateless
+    set state [state] of one-of neighbors4 with [state != 0]
+end
+
+
+; Observer context
+to set-coast
+  let land-patches patches with [state = "land"]
+  ask land-patches [
+    ; Note: ideally this would just be in-boundary?. A few patches off of Maine were labeled "water".
+    ifelse any? neighbors with [in-boundary? = true or state = "water"][
+      set coastline? true
+    ][
+      set coastline? false
+    ]
+  ]
+  remove-singles
+  remove-doubles
+  remove-singles
+  set-default-coast
+  remove-doubles
+  let max-coast 0
+  coast-numbers (patch 0 140) max-coast
+  set coastal-patches patches with [coast-num > 0]
+end
+
+; Observer context
+to set-closest
+  set traveling-patches patches with [in-boundary?]
+  ask traveling-patches [
+    set closest-coast [coast-num] of (min-one-of coastal-patches [distance myself])
+  ]
+end
+
+
+; Observer context
+to remove-singles
+  ask patches with [coastline?] [
+    if count neighbors4 with [coastline?] = 1 [set coastline? false]
+  ]
+end
+
+; Observer context
+to remove-doubles
+  ask patches with [coastline?][
+    ; if you have a neighbor above you, to the right of you, and to the diagonal right, set your own coastline? to false
+    if [coastline?] of patch (pxcor) (pycor + 1) and [coastline?] of patch (pxcor + 1) (pycor) and [coastline?] of patch (pxcor + 1) (pycor + 1) [
+      set coastline? false
+    ]
+  ]
+end
+
+; Observer context
+to set-default-coast
+  ask patch 0 140 [set coastline? true]
+  ask patch 1 140 [set coastline? true]
+  ask patch 2 140 [set coastline? true]
+  ask patch 2 139 [set coastline? true]
+  ask patch 2 138 [set coastline? true]
+  ask patch 3 138 [set coastline? true]
+  ask patch 4 138 [set coastline? true]
+  ask patch 5 138 [set coastline? true]
+  ask patch 470 144 [set coastline? true]
+  ask patch 470 145 [set coastline? true]
+  ask patch 470 146 [set coastline? true]
+  ask patch 470 147 [set coastline? true]
+  ask patch 470 148 [set coastline? true]
+  ask patch 471 148 [set coastline? true]
+  ask patch 472 148 [set coastline? true]
+  ask patch 473 148 [set coastline? true]
+  ask patch 474 148 [set coastline? true]
+  ask patch 474 147 [set coastline? true]
+  ask patch 830 255 [set coastline? true]
+  ask patch 831 255 [set coastline? true]
+  ask patch 832 255 [set coastline? true]
+  ask patch 833 255 [set coastline? true]
+  ask patch 309 146 [set coastline? false]
+  ask patch 310 147 [set coastline? false]
+  ask patch 472 147 [set coastline? false]
+  ask patch 830 256 [set coastline? false]
+  ask patch 831 256 [set coastline? false]
+  ask patch 832 256 [set coastline? false]
+  ask patch 833 256 [set coastline? false]
+end
+
+; Observer context
+to coast-numbers [my-patch current-num]
+  ;print(my-patch)
+  ask my-patch [
+    set coast-num current-num
+    set visited? true
+    set current-num current-num + 1
+    if my-patch != patch 832 255 [
+      let next-patch one-of neighbors4 with [ not visited? and coastline? ]
+      coast-numbers next-patch current-num
+    ]
+  ]
+end
+
+
+; Observer context
+to init-globals
+  set day 0
+  set year 0
+  set min-window 0
+  set max-window 40
+  set distribution-variability 0.2
+  ;set traveling-patches patches with [in-boundary?]
+  set daily-death-rate 0.00055
+  set offseason-death-rate .107
+  set boat-radius 1
+  set catch-probability 0.5
+  set migratory-distribution-variability 0.5
+end
+
+
+
+; Observer context
+to init-boats
+  create-boats num-boats [
+    set shape "boat"
+    set size 10
+    move-to one-of traveling-patches
+    set color yellow
+    set current-state [state] of patch-here
+    set caught-0to4 0   ; 0 to 23 inches in length
+    set caught-5to9 0   ; 24 to 32 inches in length
+    set caught-10to14 0 ; 33 to 43 inches in length
+    set caught-15to19 0 ; 44 to 53 inches in length
+    set caught-20to24 0 ; 54 to 61 inches in length
+    set caught-25to29 0 ; 62 to 70 inches in length
+    set fish-caught 0
+  ]
+end
+
+
+
+; Observer context
+to init-fish
+  let npiw num-patches-in-window
+  let distribution round (approx-init-pop / npiw)
+  ask traveling-patches with [pxcor >= min-window and pxcor <= max-window and pycor < 138] [
+
+    let plus-minus random 2
+    ifelse plus-minus = 0 [
+      set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set plus-minus random 2
+    ifelse plus-minus = 0 [
+      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+    ][
+      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+    ]
+
+    set total-fish fish-on-patch
+  ]
+  migrate
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -381,9 +590,9 @@ ticks
 
 BUTTON
 15
-95
+96
 81
-128
+129
 NIL
 setup
 NIL
@@ -398,9 +607,9 @@ NIL
 
 SLIDER
 6
-49
+50
 202
-82
+83
 approx-init-pop
 approx-init-pop
 0
@@ -413,9 +622,9 @@ HORIZONTAL
 
 BUTTON
 15
-135
+136
 80
-168
+169
 NIL
 move
 T
@@ -463,9 +672,9 @@ year
 
 SWITCH
 89
-95
+96
 192
-128
+129
 profile?
 profile?
 0
@@ -474,9 +683,9 @@ profile?
 
 SLIDER
 6
-10
+11
 201
-43
+44
 num-boats
 num-boats
 0
@@ -906,9 +1115,9 @@ NIL
 
 BUTTON
 14
-222
+223
 188
-255
+256
 NIL
 remove-all-boats
 NIL
@@ -934,9 +1143,9 @@ count boats
 
 SWITCH
 14
-180
+181
 189
-213
+214
 natural-mortality?
 natural-mortality?
 0
@@ -945,12 +1154,12 @@ natural-mortality?
 
 SWITCH
 88
-136
+137
 192
-169
+170
 speed-up?
 speed-up?
-0
+1
 1
 -1000
 

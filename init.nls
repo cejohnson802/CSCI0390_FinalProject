@@ -71,9 +71,9 @@ to set-coast
       set coastline? false
     ]
   ]
-  clean-coastline
+  remove-singles
   remove-doubles
-  clean-coastline
+  remove-singles
   set-default-coast
   remove-doubles
   let max-coast 0
@@ -91,7 +91,7 @@ end
 
 
 ; Observer context
-to clean-coastline
+to remove-singles
   ask patches with [coastline?] [
     if count neighbors4 with [coastline?] = 1 [set coastline? false]
   ]
@@ -245,68 +245,5 @@ to init-fish
 
     set total-fish fish-on-patch
   ]
-end
-
-
-; Distribute initial fish population throughout the starting patches (based on a normal distribution)
-; Observer context
-to normal-init-fish
-  let npiw num-patches-in-window
-  let distribution floor (approx-init-pop / npiw)
-  
-  repeat npiw [
-    
-    let patch-to-fill patch random-normal 20 5 random-normal 130 5
-    while [[not in-boundary?] of patch-to-fill] [
-      set patch-to-fill patch random-normal 20 5 random-normal 130 5
-    ]
-    
-    ask patch-to-fill [
-      let plus-minus random 2
-      ifelse plus-minus = 0 [
-        set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-      ][
-        set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
-      ]
-      set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
-    ]
-
-    set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
-    ]
-
-    set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
-    ]
-
-    set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
-    ]
-
-    set plus-minus random 2
-    ifelse plus-minus = 0 [
-      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
-    ][
-      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
-    ]
-
-      set total-fish fish-on-patch
-  ]
-  ]
-
-  ; Call migrate once to spread out the normally-distributed fish
   migrate
 end
