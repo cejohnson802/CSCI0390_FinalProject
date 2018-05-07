@@ -24,12 +24,14 @@
 
 to migrate
   ask traveling-patches with [total-fish > 0] [
-    let good-neighbors traveling-patches in-radius 4 with [
-      (closest-coast > [closest-coast] of myself and closest-coast < [closest-coast] of myself + 4) or 
-      ((pxcor = [pxcor] of myself or pxcor = [pxcor] of myself + 4 or pxcor = [pxcor] of myself + 4)
+    let good-neighbors traveling-patches in-radius 10 with [
+      (closest-coast > [closest-coast] of myself and closest-coast < [closest-coast] of myself + 10) or 
+      ((pxcor = [pxcor] of myself or pxcor = [pxcor] of myself + 10 or pxcor = [pxcor] of myself + 10)
       and (pycor = [pycor] of myself
-        or pycor = [pycor] of myself + 3
-        or pycor = [pycor] of myself - 3))]
+        or pycor = [pycor] of myself + 7
+        or pycor = [pycor] of myself - 7
+        or pycor = [pycor] of myself + 9
+        or pycor = [pycor] of myself - 9))]
     ;or closest-coast = [closest-coast] of myself]
     ;let good-neighbors traveling-patches with [closest-coast > [closest-coast] of myself and (closest-coast < [closest-coast] of myself + 10)]
     ask good-neighbors [

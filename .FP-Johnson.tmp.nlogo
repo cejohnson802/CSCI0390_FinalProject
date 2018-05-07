@@ -87,7 +87,7 @@ end
 
 ; Observer context
 to move
-  ifelse day < 200 [ ; 170
+  ifelse day < 170 [ ; 170
     if profile? [profiler:start]
     set day day + 1
     color-patches
@@ -235,15 +235,15 @@ end
 to spawn
   set zero-to-four zero-to-four +
   ; the female five-to-nine fish will each spawn approximately 4000 surviving babies
-  floor ((five-to-nine / 2) * ((0.75 + random 0.5) * 0.4)) +
+  floor ((five-to-nine / 2) * ((0.75 + random 0.5) * 04)) +
   ; the female ten-to-fourteen fish will each spawn approximately 16000 surviving babies
-  floor ((ten-to-fourteen / 2) * ((0.75 + random 0.5) * 1.6)) +
+  floor ((ten-to-fourteen / 2) * ((0.75 + random 0.5) * 16)) +
   ; the female fifteen-to-nineteen fish will each spawn approximately 24000 surviving babies
-  floor ((fifteen-to-nineteen / 2) * ((0.75 + random 0.5) * 2.4)) +
+  floor ((fifteen-to-nineteen / 2) * ((0.75 + random 0.5) * 24)) +
   ; the female twenty-to-twenty-four fish will each spawn approximately 30000 surviving babies
-  floor ((twenty-to-twenty-four / 2) * ((0.75 + random 0.5) * 3)) +
+  floor ((twenty-to-twenty-four / 2) * ((0.75 + random 0.5) * 30)) +
   ; the female twenty-five-to-twenty-nine fish will each spawn approximately 34000 surviving babies
-  floor ((twenty-five-to-twenty-nine / 2) * ((0.75 + random 0.5) * 3.4))
+  floor ((twenty-five-to-twenty-nine / 2) * ((0.75 + random 0.5) * 34))
 end
 
 
