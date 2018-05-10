@@ -22,9 +22,12 @@
 ;end
 
 
+; Move fish population up the coast by transferring a number of fish from each age category to
+; eligible patches (patches ahead, above, or below with respect to the coastline)  
+; Observer context
 to migrate
   ask traveling-patches with [total-fish > 0] [
-    let good-neighbors traveling-patches in-radius 10 with [
+    set good-neighbors traveling-patches in-radius 10 with [
       (closest-coast > [closest-coast] of myself and closest-coast < [closest-coast] of myself + 10) or 
       ((pxcor = [pxcor] of myself or pxcor = [pxcor] of myself + 10 or pxcor = [pxcor] of myself + 10)
       and (pycor = [pycor] of myself
@@ -47,6 +50,51 @@ to migrate
   ]  
 end
 
+
+; Move fish population up the coast by transferring a number of fish from each age category to
+; eligible patches (patches ahead, above, or below with respect to the coastline)  
+; Adapted from sample-migrate.netlogo by Matthew Dickerson
+to migrate2
+  let new-fish-patches []
+  
+  foreach fish-patches [ p -> ask p [ set visited? false]]
+  foreach fish-patches [ p -> ask p [
+;    let good-neighbors traveling-patches in-radius 10 with [
+   ; show count good-neighbors
+    ask good-neighbors [
+      migrate-zero-to-four
+      migrate-five-to-nine
+      migrate-ten-to-fourteen    
+      migrate-fifteen-to-nineteen
+      migrate-twenty-to-twenty-four      
+      migrate-twenty-four-to-twenty-nine
+      set total-fish fish-on-patch
+     ;ask myself [set total-fish fish-on-patch]
+      
+      if not visited? and total-fish > 0  [
+        set visited? true
+        set new-fish-patches fput self new-fish-patches
+      ]
+    ]
+    
+    set total-fish fish-on-patch 
+    
+    if total-fish > 0 [
+     set visited? true
+      set new-fish-patches fput self new-fish-patches
+    ]
+    ]
+  ]
+  
+  set fish-patches new-fish-patches
+  
+  foreach fish-patches [p -> ask p [ set total-fish fish-on-patch]]
+  
+end
+
+
+; Increases this patch's popoulation of fish in age group 0-4 by a percentage of the population of fish 0-4 on
+; the asking patch
 ; Patch context
 to migrate-zero-to-four
   let n-zero-to-four (random-float migratory-distribution-variability) * [zero-to-four] of myself
@@ -118,28 +166,3 @@ to migrate-twenty-four-to-twenty-nine
   ask myself [set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - floor-twenty-five-to-twenty-nine]
 end
 
-
-;pick nearest, not visited neighbor
-; list of coastal patches in increasing order
-;
-
-; Patch context
-to-report find-good-neighbors
-  let good-neighbors patches in-radius 8 with
-    [(pxcor = [pxcor] of myself or pxcor = [pxcor] of myself + 6 or pxcor = [pxcor] of myself + 8)
-      and (pycor = [pycor] of myself
-        or pycor = [pycor] of myself + 7
-        or pycor = [pycor] of myself - 7
-        or pycor = [pycor] of myself + 5
-        or pycor = [pycor] of myself - 5)
-      and in-boundary?] ;or pycor = [pycor] of myself + 1 or pycor = [pycor] of myself - 1)]
-  if not any? good-neighbors [ set good-neighbors patches in-radius 10 with
-    [pxcor <= [pxcor] of myself
-      and (pycor = [pycor] of myself
-        or pycor = [pycor] of myself + 10
-        or pycor = [pycor] of myself - 10
-      )
-      and in-boundary?]
-  ]
-  report good-neighbors
-end

@@ -3,12 +3,14 @@
 ; CSCI 0390
 ; May 14, 2018
 
+;
 ; Observer context
 to remove-all-boats
-  
+  ask boats [die]
 end
 
 
+; Add a new boat off the coast of New Jersey
 ; Observer context
 to add-NJ-boat
   create-boats 1 [
@@ -28,6 +30,7 @@ to add-NJ-boat
 end
 
 
+; Add a new boat off the coast of New York
 ; Observer context
 to add-NY-boat
   create-boats 1 [
@@ -47,6 +50,7 @@ to add-NY-boat
 end
 
 
+; Add a new boat off the coast of Connecticut 
 ; Observer context
 to add-CT-boat
   create-boats 1 [
@@ -66,6 +70,7 @@ to add-CT-boat
 end
 
 
+; Add a new boat off the coast of Rhode Island
 ; Observer context
 to add-RI-boat
   create-boats 1 [
@@ -85,6 +90,7 @@ to add-RI-boat
 end
 
 
+; Add a new boat off the coast of Massachusetts
 ; Observer context
 to add-MA-boat
   create-boats 1 [
@@ -103,7 +109,7 @@ to add-MA-boat
   ]
 end
 
-
+; Add a new boat off the coast of New Hampshire
 ; Observer context
 to add-NH-boat
   create-boats 1 [
@@ -122,7 +128,7 @@ to add-NH-boat
   ]
 end
 
-
+; Add a new boat off the coast of Maine
 ; Observer context
 to add-ME-boat
   create-boats 1 [
@@ -142,6 +148,9 @@ to add-ME-boat
 end
 
 
+;=========================FISH- PROCEDURES (OBSERVER CONTEXT)===========
+
+; All boats in New Jersey waters fish according to NJ-min and NJ-num limits
 ; Observer context
 to fish-NJ
   ask boats with [current-state = "NJ" and [total-fish] of patch-here > 10] [
@@ -199,6 +208,7 @@ to fish-NJ
 end
 
 
+; All boats in New York waters fish according to NY-min and NY-num limits
 ; Observer context
 to fish-NY
   ask boats with [current-state = "NY" and [total-fish] of patch-here > 10] [
@@ -256,7 +266,7 @@ to fish-NY
 end
 
 
-
+; All boats in Connecticut waters fish according to CT-min and CT-num limits
 ; Observer context
 to fish-CT
   ask boats with [current-state = "CT" and [total-fish] of patch-here > 10] [
@@ -315,7 +325,7 @@ end
 
 
 
-
+; All boats in Rhode Island waters fish according to RI-min and RI-num limits
 ; Observer context
 to fish-RI
   ask boats with [current-state = "RI" and [total-fish] of patch-here > 10] [
@@ -374,7 +384,7 @@ end
 
 
 
-
+; All boats in Massachusetts waters fish according to MA-min and MA-num limits
 ; Observer context
 to fish-MA
   ask boats with [current-state = "MA" and [total-fish] of patch-here > 10] [
@@ -433,7 +443,7 @@ end
 
 
 
-
+; All boats in New Hampshire waters fish according to NH-min and NH-num limits
 ; Observer context
 to fish-NH
   ask boats with [current-state = "NH" and [total-fish] of patch-here > 10] [
@@ -491,7 +501,7 @@ to fish-NH
 end
 
 
-
+; All boats in Maine waters fish according to ME-min and ME-num limits
 ; Observer context
 to fish-ME
   ask boats with [current-state = "ME" and [total-fish] of patch-here > 10] [
@@ -549,8 +559,10 @@ to fish-ME
 end
 
 
+;====================CATCH- PROCEDURES (PATCH CONTEXT) ================
 
-
+; Transfer a number of fish ages 0-4 from this patch to the boat agent
+; Number based on catch-probability
 ; Patch context
 to catch-0to4
   let n-zero-to-four (random-float catch-probability) * [zero-to-four] of myself
@@ -562,6 +574,8 @@ to catch-0to4
   ask myself [set caught-0to4 caught-0to4 + floor-zero-to-four]
 end
 
+; Transfer a number of fish ages 5-9 from this patch to the boat agent
+; Number based on catch-probability
 ; Patch context
 to catch-5to9
   let n-five-to-nine (random-float catch-probability) * [five-to-nine] of myself
@@ -573,6 +587,7 @@ to catch-5to9
   ask myself [set caught-5to9 caught-5to9 + floor-five-to-nine]
 end
 
+; Transfer a number of fish ages 10-14 from this patch to the boat agent
 ; Patch context
 to catch-10to14
   let n-ten-to-fourteen (random-float catch-probability) * [ten-to-fourteen] of myself
@@ -584,6 +599,7 @@ to catch-10to14
   ask myself [set caught-10to14 caught-10to14 + floor-ten-to-fourteen]
 end
 
+; Transfer a number of fish ages 15-19 from this patch to the boat agent
 ; Patch context
 to catch-15to19
   let n-fifteen-to-nineteen (random-float catch-probability) * [fifteen-to-nineteen] of myself
@@ -595,6 +611,7 @@ to catch-15to19
   ask myself [set caught-15to19 caught-15to19 + floor-fifteen-to-nineteen]
 end
 
+; Transfer a number of fish ages 20-24 from this patch to the boat agent
 ; Patch context
 to catch-20to24
   let n-twenty-to-twenty-four (random-float catch-probability) * [twenty-to-twenty-four] of myself
@@ -606,6 +623,7 @@ to catch-20to24
   ask myself [set caught-20to24 caught-20to24 + floor-twenty-to-twenty-four]
 end
 
+; Transfer a number of fish ages 25-29 from this patch to the boat agent
 ; Patch-context
 to catch-25to29
   let n-twenty-five-to-twenty-nine (random-float catch-probability) * [twenty-five-to-twenty-nine] of myself
