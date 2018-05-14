@@ -1268,14 +1268,12 @@ The ADD-STATECODE-BOAT buttons add a fishing boat off the coast of (State), subj
 
 The results of interest in this model are the fish-population and the change in fish-population over time. 
 
-We ran a BehaviorSpace experiment to test the impact of the size limit and the 2-day catch limit in New Jersey on the population of the Atlantic Striped Bass. We ran the test over the first 90 days of a single season (long enough for the migration to have moved completely through New Jersey waters), with the minimum size limit set to 0, 30, and 50 and the 2-day catch limit number set to 0, 2, and 8 for a total of 18 runs. 
+We ran a BehaviorSpace experiment to test the impact of the size limit and the 2-day catch limit in New Jersey on the population of the Atlantic Striped Bass. We ran the test over the first 90 days of a single season (long enough for the migration to have moved completely through New Jersey waters), with the minimum size limit set to 0, 30, and 50 and the 2-day catch limit number set to 0, 2, and 8 for a total of 18 runs (each combination ran twice). 
 
-The highest population after 90 days resulted when no fishing was allowed in New Jersey (NJ-NUM = 0), with an average of 945594 fish over six runs.
-Increasing the catch limit to 2 fish per 2-day period resulted in a an average of 9156301 fish remaining after 90 days, averaged over six runs. 
-Increasing the catch limit to 8 fish per 2-day period resulted in a an average of 8551018 fish remaining after 90 days, averaged over six runs. 
-The lowest population after 90 days resulted when the catch limit was set to 8 fish per 2-day period (NJ-NUM = 8), and the size-limit was set to 30 inches (NJ-MIN = 30), at an average of 8133968 over two runs. 
+The highest population after 90 days resulted when no fishing was allowed in New Jersey (NJ-NUM = 0), with an average of 9,455,940 fish over six runs. Increasing the catch limit to 2 fish per 2-day period resulted in a an average of 9,156,301 fish remaining after 90 days, averaged over six runs. Increasing the catch limit to 8 fish per 2-day period resulted in a an average of 8551018 fish remaining after 90 days, averaged over six runs.
+The lowest population after 90 days resulted when the catch limit was set to 8 fish per 2-day period (NJ-NUM = 8), and the size-limit was set to 30 inches (NJ-MIN = 30), with an average of 8,133,968 remaining fish over two runs.  
 
-
+The overall trends from this BehaviorSpace experiment show that the resulting fish population tends to decrease as the catch limit is increased, and increase as the size limit is raised. Future experiments should test the impact of these regulations on the fish population over several years (several fishing seasons) to determine longer-term impacts of regulations that may result in heavier fishing of mature Atlantic Striper populations (fish that are able to reproduce). Other experiments might also investigate the impact of regulations in specific states with extensive or less extensive coastlines. 
 
 
 ## ODD PRINCIPLES
@@ -1293,10 +1291,10 @@ INTERACTION: Boats interact with patches from which they catch fish, and patches
 
 OBSERVATION: The size of the striper population is constantly being observed.
 
+COLLECTIVES: The patches with a non-zero fish population are accessed through a list, fish-patches, which is updated at each tick. 
 
 STOCHASTICITY: The number of fish in the world upon initialization is approximately the number set via the APPROX-INIT-FISH slider, but there are three stochastic elements in the distribution process that create variability from one run to the next. 
 Boats are initialized in random locations, and the movement of boats is random within a set radius. The number of fish caught by a boat, though determined in part by the state regulations, has an element of randomness in the catch-probability global variable as to whether or not fish are caught.The movement of fish is unique to each run of the model as only a random 10 of a possible 25+ potential good-neighbor patches is stored for use in the migration procedure. 
-
 
 
 SIMPLIFICATIONS: Each patch in the world represents approximately 1.4 square miles. There are many simplifications made in the modelling of the striper migration in this model. The fish on a given patch can move to another patch in a 10-patch (14-mile) radius in a two-day period, with all decisions about seasonal weather variations, preference for sections of the coast, or movement into coves, bays abstracted away. The fish only travel in patches within the U.S. Maritime Boundary (which is at times a greater distance from shore than stripers are generally found), and the shoreline has been simplified. The state maritime boundaries are general estimates. 
