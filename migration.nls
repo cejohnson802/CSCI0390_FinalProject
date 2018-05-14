@@ -21,26 +21,19 @@ to migrate
       migrate-twenty-to-twenty-four      
       migrate-twenty-four-to-twenty-nine
       set total-fish fish-on-patch
-      
-      
       if not visited? and total-fish > 0  [
         set visited? true
         set new-fish-patches fput self new-fish-patches
       ]
     ]
-    
-    set total-fish fish-on-patch 
-    
+    set total-fish fish-on-patch  
     if not visited? and total-fish > 0 [
-     set visited? true
-     set new-fish-patches fput self new-fish-patches
+      set visited? true
+      set new-fish-patches fput self new-fish-patches
     ]
     ]
-  ]
-  
+  ] 
   set fish-patches new-fish-patches
-  
-  
 end
 
 

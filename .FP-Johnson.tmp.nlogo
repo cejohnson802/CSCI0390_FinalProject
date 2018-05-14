@@ -6,7 +6,7 @@
 ; We have neither given nor received unauthorized aid on this assignment. Chloe Johnson and Anna Novak
 
 __includes [ "migration.nls" "fishing.nls" ]
-extensions [ profiler ]
+
 
 
 ; ------------- BREEDS, GLOBAL & INSTANCE VARIABLES -------------
@@ -17,6 +17,8 @@ globals [
   min-window                          ; the minimum initial pxcor for the fish to occupy
   max-window                          ; the maximum initial pxcor for the fish to occupy
   distribution-variability            ; variation in distribution of initial fish population
+  age-distribution                    ; the minimum percentage of the distribution of fish on a single patch that goes into a given age category
+  age-distribution-variability        ; variation in distribution of fish by age category on a single patch
   traveling-patches                   ; agentset of patches in-boundary?
   fish-patches                        ; list of patches with a total-fish population > 0
   two-day-death-rate                  ; the death rate that all fish experience every two days in-season (i.e. on each tick)
@@ -26,8 +28,7 @@ globals [
   coastal-patches                     ; the patches that make up the coastline
   migratory-distribution-variability  ; the maximum percentage of fish that can migrate (used in each age group)
   num-neighbors                       ; the number of other patches that a patch can transfer fish to on each tick (number of patches stored in the patches-own variable good-neighbors)
-  travel-allowance                    ; the radius used to determine which patches a given patch a can transfer fish to on each tick
-  percent-done
+  percent-done                        ; the percentage of traveling-patches that have had good-neighbors calculated (set-good-neighbors procedure called during init-patches)
 ]
 
 breed [ boats boat ]                  ; a new breed that can travel through traveling-patches and catch fish
@@ -64,6 +65,7 @@ patches-own [
 
 ; ------------- SETUP & BASIC INITIALIZATION PROCEDURES -------------
 
+
 ; Setup procedure
 ; Observer context
 to setup
@@ -82,8 +84,7 @@ end
 ; Initializes patches-own variables and patch-related globals
 ; Observer context
 to init-patches
-  set travel-allowance 7
-  set num-neighbors 10  ;10
+  set num-neighbors 10
   ask patches [
     set zero-to-four 0
     set five-to-nine 0
@@ -104,8 +105,6 @@ end
 
 
 
-
-
 ; Initializes global variables, excluding those needed for init-patches.
 ; Observer context
 to init-globals
@@ -114,6 +113,8 @@ to init-globals
   set min-window 0
   set max-window 40
   set distribution-variability 0.2
+  set age-distribution 0.12
+  set age-distribution-variability 0.08
   set fish-patches []
   set two-day-death-rate 0.0011
   set offseason-death-rate .107
@@ -121,6 +122,7 @@ to init-globals
   set catch-probability 0.5
   set migratory-distribution-variability 0.5
 end
+
 
 
 ; Initializes boat agents
@@ -143,6 +145,7 @@ to init-boats
 end
 
 
+
 ; Distributes initial fish population (set via the APPROX-INIT-FISH interface slider) across an initial window of patches.
 ; Fish are distributed to patches by age group in a process with three random elements. Each age group on a patch receives between 8-12%
 ; of the number of total fish in the world divided by the number of patches in the starting window, plus or minus the product of that number
@@ -155,44 +158,44 @@ to init-fish
   ask traveling-patches with [pxcor >= min-window and pxcor <= max-window] [
     let plus-minus random 2
     ifelse plus-minus = 0 [
-      set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+      set zero-to-four round ((age-distribution + random-float age-distribution-variability) * (distribution + (round (distribution * random-float distribution-variability))))
     ][
-      set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+      set zero-to-four round ((age-distribution + random-float age-distribution-variability) * (distribution + (round (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+      set five-to-nine round ((age-distribution + random-float age-distribution-variability) * (distribution + (round (distribution * random-float distribution-variability))))
     ][
-      set five-to-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+      set five-to-nine round ((age-distribution + random-float age-distribution-variability) * (distribution + (round (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+      set ten-to-fourteen round ((age-distribution + random-float age-distribution-variability) * (distribution + (round (distribution * random-float distribution-variability))))
     ][
-      set ten-to-fourteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+      set ten-to-fourteen round ((age-distribution + random-float age-distribution-variability) * (distribution + (round (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+      set fifteen-to-nineteen round ((age-distribution + random-float age-distribution-variability) * (distribution + (round (distribution * random-float distribution-variability))))
     ][
-      set fifteen-to-nineteen round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+      set fifteen-to-nineteen round ((age-distribution + random-float age-distribution-variability) * (distribution + (round (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+      set twenty-to-twenty-four round ((age-distribution + random-float age-distribution-variability) * (distribution + (round (distribution * random-float distribution-variability))))
     ][
-      set twenty-to-twenty-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+      set twenty-to-twenty-four round ((age-distribution + random-float age-distribution-variability) * (distribution + (round (distribution * random-float distribution-variability * -1))))
     ]
 
     set plus-minus random 2
     ifelse plus-minus = 0 [
-      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
+      set twenty-five-to-twenty-nine round ((age-distribution + random-float age-distribution-variability) * (distribution + (round (distribution * random-float distribution-variability))))
     ][
-      set twenty-five-to-twenty-nine round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability * -1))))
+      set twenty-five-to-twenty-nine round ((age-distribution + random-float age-distribution-variability) * (distribution + (round (distribution * random-float distribution-variability * -1))))
     ]
 
     set total-fish fish-on-patch
@@ -200,6 +203,7 @@ to init-fish
   ]
 
 end
+
 
 
 ; Recolors patches according to the number of total fish being held by a patch
@@ -231,41 +235,10 @@ to color-patches
 end
 
 
-;to color-patches2
-;  foreach fish-patches [ p -> ask p [
-;    if total-fish = 0 [
-;      set pcolor 97.9
-;    ]
-;    if total-fish > 1 and total-fish <= 10 [
-;      set pcolor 96
-;    ]
-;    if total-fish > 10 and total-fish <= 100 [
-;      set pcolor 106
-;    ]
-;    if total-fish > 100 and total-fish <= 1000 [
-;      set pcolor 116
-;    ]
-;    if total-fish > 1000 and total-fish <= 100000 [
-;      set pcolor 126
-;    ]
-;    if total-fish > 10000 and total-fish <= 100000 [
-;      set pcolor 124
-;    ]
-;    if total-fish > 100000[
-;      set pcolor 16
-;    ]
-;    ]
-;  ]
-;
-;end
-
-
-
 
 ; ------------------- PATCH INITIALIZATION PROCEDURES ---------------------
 
-
-; Assigns all patches a state according to the background image imported in the setup procedure.
+; Assigns all patches a state according to the image imported in the setup procedure.
 ; Observer context
 to set-states
   ask patches [
@@ -300,7 +273,7 @@ to handle-stateless
 end
 
 
-; Identifies and creates an agent-set of patches that are part of the coastline
+; Identifies and creates an agent-set of patches that are part of the coastline.
 ; Observer context
 to set-coast
   let land-patches patches with [state = "land"]
@@ -333,11 +306,11 @@ to set-closest
 end
 
 
-; 7 , 4, 6  took 38 min to reach mid-Maine by day 132
 ; All patches that can carry fish keep track of an agentset of other patches to which they can transfer their fish (good-neighbors).
-; Good-neighbors are patches in-radius travel-allowance that are either directly forward with respect to the coastline, forward-and-ahead or forward-and-below by pxcor and pycor.
-; Travel-allowance sets the radius considered in determining good neighbors and is initialized in the init-patches procedure.
+; The radius, distance along the coast, pycor and pxcor range are hard coded (as the values that we determined to be sucessful for migration and handling of
+; the Massachusetts coastline area.
 ; Num-neighbors sets the number of patches stored in the agentset and is initialized in the init-patches procedure.
+; Percent-done counter implementation courtesy of Matthew Dickerson.
 ; Observer context
 to set-good-neighbors
   let i 0
@@ -345,20 +318,18 @@ to set-good-neighbors
     ask traveling-patches [
         set i i + 1
         set percent-done i / m
-        let temp-good-neighbors traveling-patches in-radius 10 with [                           ; 10
-      (closest-coast > [closest-coast] of myself and closest-coast < [closest-coast] of myself + 10) or       ; 10
-      ((pxcor = [pxcor] of myself or pxcor = [pxcor] of myself + 10 or pxcor = [pxcor] of myself - 10)        ; 10 , 10
+        let temp-good-neighbors traveling-patches in-radius 10 with [
+      (closest-coast > [closest-coast] of myself and closest-coast < [closest-coast] of myself + 10) or
+      ((pxcor = [pxcor] of myself or pxcor = [pxcor] of myself + 10 or pxcor = [pxcor] of myself - 10)
       and (pycor = [pycor] of myself
-        or pycor = [pycor] of myself + 7  ; 7
-        or pycor = [pycor] of myself - 7  ; 7
-        or pycor = [pycor] of myself + 9      ; 9
-          or pycor = [pycor] of myself - 9 ))]  ; 9
+        or pycor = [pycor] of myself + 7
+        or pycor = [pycor] of myself - 7
+        or pycor = [pycor] of myself + 9
+          or pycor = [pycor] of myself - 9 ))]
     let n min (list count temp-good-neighbors num-neighbors)
     set good-neighbors n-of n temp-good-neighbors
   ]
 end
-
-
 
 
 ; Clean up coastline by removing individual protruding patches
@@ -368,6 +339,7 @@ to remove-singles
     if count neighbors4 with [coastline?] = 1 [set coastline? false]
   ]
 end
+
 
 ; Clean up coastline by removing one of a pair of protruding patches
 ; Observer context
@@ -379,6 +351,7 @@ to remove-doubles
     ]
   ]
 end
+
 
 ; Handles special cases in the coastline
 ; Observer context
@@ -440,7 +413,7 @@ to move
     set day day + 2
     color-patches
     if natural-mortality? [
-      two-day-death       ; UNCOMMENT ORIGINAL
+      two-day-death
     ]
     migrate
     fish-NJ
@@ -456,7 +429,7 @@ to move
     set year year + 1
     redistribute-fish
     offseason-death
-    age-up            ; UNCOMMENT ORIGINAL
+    age-up
     color-patches
   ]
   tick
@@ -483,15 +456,13 @@ end
 
 
 
-; Redistribute fish population across the initial window of patches.
-; Called by MOVE procedure at the start of a new season (days reaches 170)
+; Redistribute fish population across the initial window of patches and update fish-patches list.
+; Called by MOVE procedure at the start of a new season (when days reaches 170)
 ; Observer context
 to redistribute-fish
   let piw patches-in-window
   let new-fish-patches []
-
   foreach fish-patches [ p -> ask p [set visited? false]]
-
   foreach fish-patches [ p -> ask p [
     ask one-of piw [
       set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + [twenty-five-to-twenty-nine] of myself
@@ -500,7 +471,6 @@ to redistribute-fish
       set ten-to-fourteen ten-to-fourteen + [ten-to-fourteen] of myself
       set five-to-nine five-to-nine + [five-to-nine] of myself
       set zero-to-four zero-to-four + [zero-to-four] of myself
-
       if not visited? [
         set visited? true
         set new-fish-patches fput self new-fish-patches
@@ -515,7 +485,6 @@ to redistribute-fish
     ]
   ]
   set fish-patches new-fish-patches
-
 end
 
 
@@ -552,7 +521,8 @@ to age-up
 end
 
 
-; Reduces fish population in each age group by the offseason-death-rate to account for natural death that occurs between seasons
+; Reduces fish population in each age group by the offseason-death-rate to account for natural death that occurs between seasons.
+; Called by MOVE procedure at the start of a new season (when days reaches 170)
 ; Observer context
 to offseason-death
   ask traveling-patches with [total-fish > 0][
@@ -566,7 +536,8 @@ to offseason-death
 end
 
 
-; Adds new fish to the youngest age group based on the number of mature female fish, a set probability, and the number of surviving babies expected
+; Adds new fish to the youngest age group based on the number of mature female fish, a set probability, and the number of surviving babies expected.
+; Called by MOVE procedure at the start of a new season (when days reaches 170)
 ; Patch context
 to spawn
   set zero-to-four zero-to-four +
@@ -583,8 +554,7 @@ to spawn
 end
 
 
-;
-; Original version
+; Adjusts fish population by age-category to reflect a natural death rate over a 2 day period (one tick)
 ; Observer context
 to two-day-death
   ask traveling-patches with [total-fish > 0][
@@ -1259,7 +1229,7 @@ The initial population (based on approx-init-pop) is normally distributed off th
 
 Each tick represents a 2 day period, during which fish migrate and
 
-When the day counter reaches 170 and the fish are at the southern coast of Maine, the model resets and the remaining fish population (adjusted for aging, spawning that occurs off-season, and natural death that occurs off-season) is redistributed off the coast of New Jersey. The day-counter resets to 0 and the year is incr
+When the day counter reaches 170 and the fish are at the southern coast of Maine, the model resets and the remaining fish population (adjusted for aging, spawning that occurs off-season, and natural death that occurs off-season) is redistributed off the coast of New Jersey. The day-counter resets to 0 and the year is incremented by one. 
 
 ## HOW TO USE IT
 
