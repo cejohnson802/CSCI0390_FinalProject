@@ -5,7 +5,7 @@
 
 ; We have neither given nor received unauthorized aid on this assignment. Chloe Johnson and Anna Novak
 
-__includes [ "migration.nls" "fishing.nls" ]
+__includes [ "FP-Johnson-migration.nls" "FP-Johnson-fishing.nls" ]
 
 
 
@@ -70,11 +70,11 @@ patches-own [
 ; Observer context
 to setup
   ca
-  import-pcolors "map2e.png"
+  import-pcolors "FP-Johnson-map2e.png"
   init-patches
   init-globals
   init-boats
-  import-pcolors "map1.png"
+  import-pcolors "FP-Johnson-map1.png"
   init-fish
   color-patches
   reset-ticks
@@ -1221,7 +1221,7 @@ This project simulates the effects of state-level fishing regulations (size limi
 
 ## HOW IT WORKS
 
-The model simulates 170 days of the Atlantic Striped Bass' northward migration, beginning off the coast of New Jersey in late spring and ending at southern Maine in early fall. Bass population is divided into six age categories (5-9, 10-14, 15-19, 20-24, 25-29 ) and is a property of the patches. 
+The model simulates 170 days of the Atlantic Striped Bass' northward migration, beginning off the coast of New Jersey in late spring and ending at southern Maine in early fall. Bass population is divided into six age categories (5-9, 10-14, 15-19, 20-24, and 25-29 years old) and is a property of the patches. 
 
 The initial population (based on approx-init-pop) is randomly distributed off the coast of New Jersey to begin the simulation. The population moves northward towards Southern Maine, always remaining in waters within the U.S. maritime boundary (data from NOAA). Boats are initialized (if num-boats is non-zero) to random locations throughout the maritime boundary waters. 
 
@@ -1235,7 +1235,7 @@ Click the SETUP button to set up an initial fish population and fishing boats.
 
 The APPROX-INIT-FISH slider controls the initial bass population at the start of the first season. 
 
-The NUM-BOATS slider control the initial number of boats in the model. More boat agents can be added by state at any time, with the add-(state code)-boat buttons. 
+The NUM-BOATS slider control the initial number of boats in the model. More boat agents can be added by state at any time, with the ADD-STATECODE-BOAT buttons. 
 
 Click MOVE to begin the simulation. The bass population moves begins to move northward, and boat agents move and catch fish from the patch they are on. 
 
@@ -1270,10 +1270,10 @@ The results of interest in this model are the fish-population and the change in 
 
 We ran a BehaviorSpace experiment to test the impact of the size limit and the 2-day catch limit in New Jersey on the population of the Atlantic Striped Bass. We ran the test over the first 90 days of a single season (long enough for the migration to have moved completely through New Jersey waters), with the minimum size limit set to 0, 30, and 50 and the 2-day catch limit number set to 0, 2, and 8 for a total of 18 runs (each combination ran twice). 
 
-The highest population after 90 days resulted when no fishing was allowed in New Jersey (NJ-NUM = 0), with an average of 9,455,940 fish over six runs. Increasing the catch limit to 2 fish per 2-day period resulted in a an average of 9,156,301 fish remaining after 90 days, averaged over six runs. Increasing the catch limit to 8 fish per 2-day period resulted in a an average of 8551018 fish remaining after 90 days, averaged over six runs.
+The highest population after 90 days resulted when no fishing was allowed in New Jersey (NJ-NUM = 0), with an average of 9,455,940 fish over six runs. Increasing the catch limit to 2 fish per 2-day period resulted in a an average of 9,156,301 fish remaining after 90 days, averaged over six runs. Increasing the catch limit to 8 fish per 2-day period resulted in a an average of 8,551,018 fish remaining after 90 days, averaged over six runs.
 The lowest population after 90 days resulted when the catch limit was set to 8 fish per 2-day period (NJ-NUM = 8), and the size-limit was set to 30 inches (NJ-MIN = 30), with an average of 8,133,968 remaining fish over two runs.  
 
-The overall trends from this BehaviorSpace experiment show that the resulting fish population tends to decrease as the catch limit is increased, and increase as the size limit is raised. Future experiments should test the impact of these regulations on the fish population over several years (several fishing seasons) to determine longer-term impacts of regulations that may result in heavier fishing of mature Atlantic Striper populations (fish that are able to reproduce). Other experiments might also investigate the impact of regulations in states with more extensive coastlines
+The overall trends from this BehaviorSpace experiment show that the resulting fish population tends to decrease as the catch limit is increased, and increase as the size limit is raised. Future experiments should test the impact of these regulations on the fish population over several years (several fishing seasons) to determine longer-term impacts of regulations that may result in heavier fishing of mature Atlantic Striper populations (fish that are able to reproduce). Other experiments might also investigate the impact of regulations in specific states with extensive or less extensive coastlines. 
 
 
 ## ODD PRINCIPLES
@@ -1297,7 +1297,7 @@ STOCHASTICITY: The number of fish in the world upon initialization is approximat
 Boats are initialized in random locations, and the movement of boats is random within a set radius. The number of fish caught by a boat, though determined in part by the state regulations, has an element of randomness in the catch-probability global variable as to whether or not fish are caught.The movement of fish is unique to each run of the model as only a random 10 of a possible 25+ potential good-neighbor patches is stored for use in the migration procedure. 
 
 
-SIMPLIFICATIONS: Each patch in the world represents approximately 1.4 square miles. There are many simplifications made in the modelling of the striper migration in this model. The fish on a given patch can move to another patch in a 10-patch (14-mile) radius in a two-day period, with all decisions about seasonal weather variations, preference for sections of the coast, or movement into coves, bays abstracted away. The fish only travel in patches within the U.S. Maritime Boundary (which is at times a greater distance from shore than stripers are generally found), and the shoreline has been simplified. The state maritime boundaries are general estimates. 
+SIMPLIFICATIONS: Each patch in the world represents approximately 1.4 square miles. There are many simplifications made in the modelling of the striper migration in this model.  The fish on a given patch can move to another patch in a 10-patch (14-mile) radius in a two-day period, with all decisions about seasonal weather variations, preference for sections of the coast, or movement into coves, bays abstracted away. The fish only travel in patches within the U.S. Maritime Boundary (which is at times a greater distance from shore than stripers are generally found), and the shoreline has been simplified. The state maritime boundaries are general estimates. 
 
 
 ## CREDITS AND REFERENCES
