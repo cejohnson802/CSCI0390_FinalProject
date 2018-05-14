@@ -778,7 +778,7 @@ NJ-min
 NJ-min
 0
 70
-0.0
+30.0
 1
 1
 in
@@ -971,7 +971,7 @@ NJ-num
 NJ-num
 0
 10
-0.0
+8.0
 2
 1
 fish/2 days
@@ -1226,10 +1226,10 @@ natural-mortality?
 -1000
 
 MONITOR
-28
-270
-117
-315
+100
+110
+189
+155
 NIL
 percent-done
 17
@@ -1257,6 +1257,9 @@ The model simulates 170 days of the Atlantic Striped Bass' northward migration, 
 
 The initial population (based on approx-init-pop) is normally distributed off the coast of New Jersey to begin the simulation. The population moves northward towards Southern Maine, always remaining in waters within the U.S. maritime boundary (data from NOAA). Boats are initialized (if num-boats is non-zero) to random locations throughout the maritime boundary waters. 
 
+Each tick represents a 2 day period, during which fish migrate and
+
+When the day counter reaches 170 and the fish are at the southern coast of Maine, the model resets and the remaining fish population (adjusted for aging, spawning that occurs off-season, and natural death that occurs off-season) is redistributed off the coast of New Jersey. The day-counter resets to 0 and the year is incr
 
 ## HOW TO USE IT
 
@@ -1269,7 +1272,10 @@ The NUM-BOATS slider control the initial number of boats in the model. More boat
 Click MOVE to begin the simulation. The bass population moves begins to move northward, and boat agents move and catch fish from the patch they are on. 
 
 
-***The NJ-MIN slider sets the minimum catch size for fish in New Jersey. The NJ-NUM slider sets the maximum number of catches that a boat in New Jersey can make per day, with a catch meaning *** 
+The NJ-MIN slider sets the minimum catch size for fish in New Jersey. The size of fish is related to their age and size limits impact which age categories can be fished from in the model. 
+
+The NJ-NUM slider sets the maximum number of catches that a boat in New Jersey can make per 2 days.
+
 
 
 
@@ -1277,11 +1283,8 @@ Click MOVE to begin the simulation. The bass population moves begins to move nor
 
 ## EXPERIMENTAL ANALYSIS
 
-BehaviorSpace experiment. 
+We ran a BehaviorSpace experiment to test the impact of the size limit and the 2-day catch limit in New Jersey on the population of the Atlantic Striped Bass. We ran the test over the first 90 days of a single season (long enough for the migration to have moved out of New Jersey waters), with the minimum size limit set to 0, 30, and 50 and the 2-day catch limit number set to 0, 2, and 8 for a total of 18 runs. 
 
-Controls- # of seasons to run the model for, # of boats
-Independent: size limits, catch limits
-(suggested things for the user to notice while running the model)
 
 ## ODD PRINCIPLES
 
@@ -1640,9 +1643,6 @@ NetLogo 6.0.2
     <enumeratedValueSet variable="RI-num">
       <value value="0"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="profile?">
-      <value value="false"/>
-    </enumeratedValueSet>
     <enumeratedValueSet variable="NJ-num">
       <value value="0"/>
       <value value="2"/>
@@ -1665,9 +1665,6 @@ NetLogo 6.0.2
     </enumeratedValueSet>
     <enumeratedValueSet variable="MA-num">
       <value value="0"/>
-    </enumeratedValueSet>
-    <enumeratedValueSet variable="speed-up?">
-      <value value="false"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="RI-min">
       <value value="0"/>
