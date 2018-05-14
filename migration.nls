@@ -3,64 +3,16 @@
 ; CSCI 0390
 ; May 14, 2018
 
-
-; Observer context
-;to migrate
-;  ask traveling-patches with [total-fish > 0] [
-;    let good-neighbors find-good-neighbors
-;    ask good-neighbors [
-;      migrate-zero-to-four
-;      migrate-five-to-nine
-;      migrate-ten-to-fourteen
-;      migrate-fifteen-to-nineteen
-;      migrate-twenty-to-twenty-four      
-;      migrate-twenty-four-to-twenty-nine
-;      set total-fish fish-on-patch
-;      ask myself [set total-fish fish-on-patch]
-;    ]
-;  ]
-;end
+;-------------------------- MIGRATION PROCEDURES ------------------
 
 
-; Move fish population up the coast by transferring a number of fish from each age category to
-; eligible patches (patches ahead, above, or below with respect to the coastline)  
-; Observer context
+; Moves fish population up the coast by transferring a number of fish from each age category to
+; eligible patches (stored as an agentset in the patches-own variable, good-neighbors) and updates the fish-patches list.    
+; List implementation adapted from sample-migrate.netlogo by Matthew Dickerson
 to migrate
-  ask traveling-patches with [total-fish > 0] [
-    set good-neighbors traveling-patches in-radius 10 with [
-      (closest-coast > [closest-coast] of myself and closest-coast < [closest-coast] of myself + 10) or 
-      ((pxcor = [pxcor] of myself or pxcor = [pxcor] of myself + 10 or pxcor = [pxcor] of myself + 10)
-      and (pycor = [pycor] of myself
-        or pycor = [pycor] of myself + 7
-        or pycor = [pycor] of myself - 7
-        or pycor = [pycor] of myself + 9
-        or pycor = [pycor] of myself - 9))]
-    ;or closest-coast = [closest-coast] of myself]
-    ;let good-neighbors traveling-patches with [closest-coast > [closest-coast] of myself and (closest-coast < [closest-coast] of myself + 10)]
-    ask good-neighbors [
-      migrate-zero-to-four
-      migrate-five-to-nine
-      migrate-ten-to-fourteen
-      migrate-fifteen-to-nineteen
-      migrate-twenty-to-twenty-four      
-      migrate-twenty-four-to-twenty-nine
-      set total-fish fish-on-patch
-      ask myself [set total-fish fish-on-patch]
-    ]
-  ]  
-end
-
-
-; Move fish population up the coast by transferring a number of fish from each age category to
-; eligible patches (patches ahead, above, or below with respect to the coastline)  
-; Adapted from sample-migrate.netlogo by Matthew Dickerson
-to migrate2
   let new-fish-patches []
-  
-  foreach fish-patches [ p -> ask p [ set visited? false]]
+  foreach fish-patches [ p -> ask p [ set visited? false]] 
   foreach fish-patches [ p -> ask p [
-;    let good-neighbors traveling-patches in-radius 10 with [
-   ; show count good-neighbors
     ask good-neighbors [
       migrate-zero-to-four
       migrate-five-to-nine
@@ -69,7 +21,7 @@ to migrate2
       migrate-twenty-to-twenty-four      
       migrate-twenty-four-to-twenty-nine
       set total-fish fish-on-patch
-     ;ask myself [set total-fish fish-on-patch]
+      
       
       if not visited? and total-fish > 0  [
         set visited? true
@@ -79,22 +31,21 @@ to migrate2
     
     set total-fish fish-on-patch 
     
-    if total-fish > 0 [
+    if not visited? and total-fish > 0 [
      set visited? true
-      set new-fish-patches fput self new-fish-patches
+     set new-fish-patches fput self new-fish-patches
     ]
     ]
   ]
   
   set fish-patches new-fish-patches
   
-  foreach fish-patches [p -> ask p [ set total-fish fish-on-patch]]
   
 end
 
 
-; Increases this patch's popoulation of fish in age group 0-4 by a percentage of the population of fish 0-4 on
-; the asking patch
+; Increases this patch's population of fish in age group 0-4 by a percentage of the population of fish 0-4 on
+; the asking patch. Decreases asking patch's 0-4 population by the same amount. 
 ; Patch context
 to migrate-zero-to-four
   let n-zero-to-four (random-float migratory-distribution-variability) * [zero-to-four] of myself
@@ -106,7 +57,8 @@ to migrate-zero-to-four
   ask myself [set zero-to-four zero-to-four - floor-zero-to-four]
 end
 
-
+; Increases this patch's population of fish in age group 5-9 by a percentage of the population of fish 5-9 on 
+; the asking patch. Decreases asking patch's 5-9 population by the same amount. 
 ; Patch context
 to migrate-five-to-nine
   let n-five-to-nine (random-float migratory-distribution-variability) * [five-to-nine] of myself
@@ -119,6 +71,8 @@ to migrate-five-to-nine
 end
 
 
+; Increases this patch's population of fish in age group 10-14 by a percentage of the population of fish 10-14 on 
+; the asking patch. Decreases asking patch's 10-14 population by the same amount. 
 ; Patch context
 to migrate-ten-to-fourteen
   let n-ten-to-fourteen (random-float migratory-distribution-variability) * [ten-to-fourteen] of myself
@@ -131,6 +85,8 @@ to migrate-ten-to-fourteen
 end
 
 
+; Increases this patch's population of fish in age group 15-19 by a percentage of the population of fish 15-19 on 
+; the asking patch. Decreases asking patch's 15-19 population by the same amount. 
 ; Patch context
 to migrate-fifteen-to-nineteen
   let n-fifteen-to-nineteen (random-float migratory-distribution-variability) * [fifteen-to-nineteen] of myself
@@ -143,6 +99,8 @@ to migrate-fifteen-to-nineteen
 end
 
 
+; Increases this patch's population of fish in age group 20-24 by a percentage of the population of fish 20-24 on 
+; the asking patch. Decreases asking patch's 20-24 population by the same amount. 
 ; Patch context
 to migrate-twenty-to-twenty-four
   let n-twenty-to-twenty-four (random-float migratory-distribution-variability) * [twenty-to-twenty-four] of myself
@@ -155,6 +113,8 @@ to migrate-twenty-to-twenty-four
 end
       
 
+; Increases this patch's population of fish in age group 24-29 by a percentage of the population of fish 24-29 on 
+; the asking patch. Decreases asking patch's 24-29 population by the same amount. 
 ; Patch context
 to migrate-twenty-four-to-twenty-nine
   let n-twenty-five-to-twenty-nine (random-float migratory-distribution-variability) * [twenty-five-to-twenty-nine] of myself

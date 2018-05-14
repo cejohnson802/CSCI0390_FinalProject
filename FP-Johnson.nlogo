@@ -19,13 +19,14 @@ globals [
   distribution-variability            ; variation in distribution of initial fish population
   traveling-patches                   ; agentset of patches in-boundary?
   fish-patches                        ; list of patches with a total-fish population > 0
-  daily-death-rate                    ; the death rate that all fish experience each day in-season (i.e. on each tick)
+  two-day-death-rate                  ; the death rate that all fish experience every two days in-season (i.e. on each tick)
   offseason-death-rate                ; the death rate that all fish experience in total during the off-season
   boat-radius                         ; the radius of patches in which a boat can catch fish
   catch-probability                   ; the probability of catching fish on that patch (used in each age group)
   coastal-patches                     ; the patches that make up the coastline
   migratory-distribution-variability  ; the maximum percentage of fish that can migrate (used in each age group)
-  num-neighbors
+  num-neighbors                       ; the number of other patches that a patch can transfer fish to on each tick (number of patches stored in the patches-own variable good-neighbors)
+  travel-allowance                    ; the radius used to determine which patches a given patch a can transfer fish to on each tick
   percent-done
 ]
 
@@ -57,7 +58,7 @@ patches-own [
   coastline?                         ; true if patch is a coastline patch, false otherwise (used for migration)
   coast-num                          ; 0 if patch is not a member of the coastline, >0 if patch is on coastline; increases sequentially from NJ to ME
   closest-coast                      ; 0 if patch is not a traveling-patch; otherwise holds the coast-num of the closest coastline patch
-  good-neighbors
+  good-neighbors                     ; an agentset of the patches to which this patch can transfer fish for migration
 ]
 
 
@@ -73,21 +74,16 @@ to setup
   init-boats
   import-pcolors "map1.png"
   init-fish
-  color-patches2 ; COLOR-PATCHES
-  if profile? [
-    profiler:stop
-    print profiler:report
-    profiler:reset
-  ]
+  color-patches
   reset-ticks
 end
 
 
-; Initializes patches
+; Initializes patches-own variables and patch-related globals
 ; Observer context
 to init-patches
-  set num-neighbors 10
-;  set traveling-patches patches with [in-boundary?]
+  set travel-allowance 7
+  set num-neighbors 10  ;10
   ask patches [
     set zero-to-four 0
     set five-to-nine 0
@@ -103,26 +99,14 @@ to init-patches
   set-states
   set-coast
   set-closest
-  let i 0
-  let m count traveling-patches
-    ask traveling-patches [
-        set i i + 1
-        set percent-done i / m
-        let temp-good-neighbors traveling-patches in-radius 10 with [
-      (closest-coast > [closest-coast] of myself and closest-coast < [closest-coast] of myself + 10) or
-      ((pxcor = [pxcor] of myself or pxcor = [pxcor] of myself + 10 or pxcor = [pxcor] of myself + 10)
-      and (pycor = [pycor] of myself
-        or pycor = [pycor] of myself + 7
-        or pycor = [pycor] of myself - 7
-        or pycor = [pycor] of myself + 9
-          or pycor = [pycor] of myself - 9))]
-    let n min (list count temp-good-neighbors num-neighbors)
-    set good-neighbors n-of n temp-good-neighbors
-  ]
+  set-good-neighbors
 end
 
 
-; Initializes global variables
+
+
+
+; Initializes global variables, excluding those needed for init-patches.
 ; Observer context
 to init-globals
   set day 0
@@ -130,9 +114,8 @@ to init-globals
   set min-window 0
   set max-window 40
   set distribution-variability 0.2
-  ;set traveling-patches patches with [in-boundary?]
   set fish-patches []
-  set daily-death-rate 0.00055
+  set two-day-death-rate 0.0011
   set offseason-death-rate .107
   set boat-radius 1
   set catch-probability 0.5
@@ -160,15 +143,16 @@ to init-boats
 end
 
 
-; Distributes initial fish population (APPROX-INIT-FISH) across an initial window of patches.
-;
-; Patches with fish are added to the fish-patches list
+; Distributes initial fish population (set via the APPROX-INIT-FISH interface slider) across an initial window of patches.
+; Fish are distributed to patches by age group in a process with three random elements. Each age group on a patch receives between 8-12%
+; of the number of total fish in the world divided by the number of patches in the starting window, plus or minus the product of that number
+; times a random factor (capped by distribution-variability) that may be positive or negative.
+; Patches with fish are then added to the fish-patches list (code adapted from sample-migration.netlogo by Matthew Dickerson)
 ; Observer context
 to init-fish
   let npiw num-patches-in-window
   let distribution round (approx-init-pop / npiw)
-  ask traveling-patches with [pxcor >= min-window and pxcor <= max-window and pycor < 138] [
-
+  ask traveling-patches with [pxcor >= min-window and pxcor <= max-window] [
     let plus-minus random 2
     ifelse plus-minus = 0 [
       set zero-to-four round ((0.12 + random-float 0.08) * (distribution + (round (distribution * random-float distribution-variability))))
@@ -215,43 +199,13 @@ to init-fish
     set fish-patches lput self fish-patches
   ]
 
- ;migrate
-  ;migrate2   ; Called once to spread out fish population for better visual
 end
 
 
-
-; Recolors patches according to number of fish being held
+; Recolors patches according to the number of total fish being held by a patch
 ; Observer context
 to color-patches
-  ask traveling-patches with [fish-on-patch >= 0] [
-    if fish-on-patch = 0 [
-      set pcolor 97.9
-    ]
-    if fish-on-patch > 1 and fish-on-patch <= 10 [
-      set pcolor 96
-    ]
-    if fish-on-patch > 10 and fish-on-patch <= 100 [
-      set pcolor 106
-    ]
-    if fish-on-patch > 100 and fish-on-patch <= 1000 [
-      set pcolor 116
-    ]
-    if fish-on-patch > 1000 and fish-on-patch <= 10000 [
-      set pcolor 126
-    ]
-    if fish-on-patch > 100000 [
-      set pcolor 16
-    ]
-  ]
-end
-
-
-; TESTING WITH MIGRATE-2
-; Recolors patches according to number of fish being held
-; Observer context
-to color-patches2
-  foreach fish-patches [ p -> ask p [
+  ask traveling-patches with [total-fish >= 0] [
     if total-fish = 0 [
       set pcolor 97.9
     ]
@@ -267,19 +221,51 @@ to color-patches2
     if total-fish > 1000 and total-fish <= 10000 [
       set pcolor 126
     ]
+    if total-fish > 10000 and total-fish <= 100000 [
+      set pcolor 124
+    ]
     if total-fish > 100000 [
       set pcolor 16
     ]
   ]
-  ]
-
 end
+
+
+;to color-patches2
+;  foreach fish-patches [ p -> ask p [
+;    if total-fish = 0 [
+;      set pcolor 97.9
+;    ]
+;    if total-fish > 1 and total-fish <= 10 [
+;      set pcolor 96
+;    ]
+;    if total-fish > 10 and total-fish <= 100 [
+;      set pcolor 106
+;    ]
+;    if total-fish > 100 and total-fish <= 1000 [
+;      set pcolor 116
+;    ]
+;    if total-fish > 1000 and total-fish <= 100000 [
+;      set pcolor 126
+;    ]
+;    if total-fish > 10000 and total-fish <= 100000 [
+;      set pcolor 124
+;    ]
+;    if total-fish > 100000[
+;      set pcolor 16
+;    ]
+;    ]
+;  ]
+;
+;end
+
 
 
 
 ; ------------------- PATCH INITIALIZATION PROCEDURES ---------------------
 
-; Assign all patches a state according to the background image
+
+; Assigns all patches a state according to the background image imported in the setup procedure.
 ; Observer context
 to set-states
   ask patches [
@@ -307,19 +293,18 @@ to set-states
 end
 
 
-; Handle colors that are between states
+; Handles transitions between colors.
 ; Patch context
 to handle-stateless
     set state [state] of one-of neighbors4 with [state != 0]
 end
 
 
-; Identify patches that are part of the coastline
+; Identifies and creates an agent-set of patches that are part of the coastline
 ; Observer context
 to set-coast
   let land-patches patches with [state = "land"]
   ask land-patches [
-    ; Note: ideally this would just be in-boundary?. A few patches off of Maine were labeled "water"
     ifelse any? neighbors with [in-boundary? = true or state = "water"][
       set coastline? true
     ][
@@ -337,7 +322,8 @@ to set-coast
 end
 
 
-; Patches that will be used for migration keep track of the closest coastline patch
+; Patches involved in migration keep track of their closest coastline patch
+; Initializes global variable traveling-patches (all patches capable of holding fish)
 ; Observer context
 to set-closest
   set traveling-patches patches with [in-boundary?]
@@ -346,7 +332,36 @@ to set-closest
   ]
 end
 
-; Clean up coastline by removing single protruding patches
+
+; 7 , 4, 6  took 38 min to reach mid-Maine by day 132
+; All patches that can carry fish keep track of an agentset of other patches to which they can transfer their fish (good-neighbors).
+; Good-neighbors are patches in-radius travel-allowance that are either directly forward with respect to the coastline, forward-and-ahead or forward-and-below by pxcor and pycor.
+; Travel-allowance sets the radius considered in determining good neighbors and is initialized in the init-patches procedure.
+; Num-neighbors sets the number of patches stored in the agentset and is initialized in the init-patches procedure.
+; Observer context
+to set-good-neighbors
+  let i 0
+  let m count traveling-patches
+    ask traveling-patches [
+        set i i + 1
+        set percent-done i / m
+        let temp-good-neighbors traveling-patches in-radius 10 with [                           ; 10
+      (closest-coast > [closest-coast] of myself and closest-coast < [closest-coast] of myself + 10) or       ; 10
+      ((pxcor = [pxcor] of myself or pxcor = [pxcor] of myself + 10 or pxcor = [pxcor] of myself - 10)        ; 10 , 10
+      and (pycor = [pycor] of myself
+        or pycor = [pycor] of myself + 7  ; 7
+        or pycor = [pycor] of myself - 7  ; 7
+        or pycor = [pycor] of myself + 9      ; 9
+          or pycor = [pycor] of myself - 9 ))]  ; 9
+    let n min (list count temp-good-neighbors num-neighbors)
+    set good-neighbors n-of n temp-good-neighbors
+  ]
+end
+
+
+
+
+; Clean up coastline by removing individual protruding patches
 ; Observer context
 to remove-singles
   ask patches with [coastline?] [
@@ -365,7 +380,7 @@ to remove-doubles
   ]
 end
 
-; Handles special cases and problem areas in the coastline
+; Handles special cases in the coastline
 ; Observer context
 to set-default-coast
   ask patch 0 140 [set coastline? true]
@@ -400,10 +415,9 @@ to set-default-coast
 end
 
 
-; Numbers coastline patches in order from New Jersey to Maine
+; Numbers coastline patches in ascending order from New Jersey to Maine
 ; Observer context
 to coast-numbers [my-patch current-num]
-  ;print(my-patch)
   ask my-patch [
     set coast-num current-num
     set visited? true
@@ -416,24 +430,19 @@ to coast-numbers [my-patch current-num]
 end
 
 
-
 ;-------------------- MOVEMENT PROCEDURES ------------------
 
-; Note: some procedures have been modified to use fish-patches list
+; Controls all tick-dependent procedures, and
 ; Called by interface "move" button
 ; Observer context
 to move
-  ifelse day < 170 [ ; 170
-    if profile? [profiler:start]
-    set day day + 1
-    color-patches2      ; COLOR-PATCHES
+  ifelse day < 170 [
+    set day day + 2
+    color-patches
     if natural-mortality? [
-      daily-death       ; UNCOMMENT ORIGINAL
+      two-day-death       ; UNCOMMENT ORIGINAL
     ]
-    migrate2           ; MIGRATE
-    if speed-up? and day > 0 [
-      reduce-patches   ; UNCOMMENT ORIGINAL
-    ]
+    migrate
     fish-NJ
     fish-NY
     fish-CT
@@ -442,23 +451,19 @@ to move
     fish-NH
     fish-ME
     move-boats
-    if profile? [
-      profiler:stop
-      print profiler:report
-      profiler:reset
-    ]
   ][
     set day 0
     set year year + 1
-    redistribute-fish ; UNCOMMENT ORIGINAL
+    redistribute-fish
     offseason-death
     age-up            ; UNCOMMENT ORIGINAL
-    color-patches2    ; COLOR-PATCHES
+    color-patches
   ]
   tick
 end
 
 
+; Controls movement of boats: boats can choose any location in-cone 3 180 as their destination.
 ; Observer context
 to move-boats
   ask boats [
@@ -470,40 +475,16 @@ to move-boats
 end
 
 
+; Updates boat agent's local knowledge of its current location with respect to state waters.
 ; Boat context
 to update-state
   set current-state [state] of patch-here
 end
 
 
-;; Redistribute fish population across the initial window of patches.
-;; Called by MOVE procedure at the start of a new season (days reaches 170)
-;; Observer context
-;to redistribute-fish
-;  let piw patches-in-window
-;  ask traveling-patches with [fish-on-patch > 0][
-;    ask one-of piw [
-;      set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + [twenty-five-to-twenty-nine] of myself
-;      set twenty-to-twenty-four twenty-to-twenty-four + [twenty-to-twenty-four] of myself
-;      set fifteen-to-nineteen fifteen-to-nineteen + [fifteen-to-nineteen] of myself
-;      set ten-to-fourteen ten-to-fourteen + [ten-to-fourteen] of myself
-;      set five-to-nine five-to-nine + [five-to-nine] of myself
-;      set zero-to-four zero-to-four + [zero-to-four] of myself
-;    ]
-;    set zero-to-four 0
-;    set five-to-nine 0
-;    set ten-to-fourteen 0
-;    set fifteen-to-nineteen 0
-;    set twenty-to-twenty-four 0
-;    set twenty-five-to-twenty-nine 0
-;  ]
-;  ask traveling-patches [
-;    set total-fish fish-on-patch
-;  ]
-;end
 
-
-; TESTING WITH MIGRATE-2
+; Redistribute fish population across the initial window of patches.
+; Called by MOVE procedure at the start of a new season (days reaches 170)
 ; Observer context
 to redistribute-fish
   let piw patches-in-window
@@ -525,73 +506,17 @@ to redistribute-fish
         set new-fish-patches fput self new-fish-patches
       ]
     ]
-    ]
-  ]
-  set fish-patches new-fish-patches
-end
-
-
-
-;; ORIGINAL VERSION
-;; Called by MOVE procedure if speed-up? is switched on.
-;; Observer context
-;to reduce-patches
-;  ask traveling-patches with [total-fish > 0] [
-;    ask one-of neighbors with [in-boundary?] [
-;      set zero-to-four zero-to-four + [zero-to-four] of myself
-;      set five-to-nine five-to-nine + [five-to-nine] of myself
-;      set ten-to-fourteen ten-to-fourteen + [ten-to-fourteen] of myself
-;      set fifteen-to-nineteen fifteen-to-nineteen + [fifteen-to-nineteen] of myself
-;      set twenty-to-twenty-four twenty-to-twenty-four + [twenty-to-twenty-four] of myself
-;      set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + [twenty-five-to-twenty-nine] of myself
-;      set total-fish total-fish + [total-fish] of myself
-;    ]
-;    set zero-to-four 0
-;    set five-to-nine 0
-;    set ten-to-fourteen 0
-;    set fifteen-to-nineteen 0
-;    set twenty-to-twenty-four 0
-;    set twenty-five-to-twenty-nine 0
-;    set total-fish 0
-;  ]
-;end
-
-; MODIFIED FOR TESTING WITH MIGRATE-2
-to reduce-patches
-  let new-fish-patches []
-
-  foreach fish-patches [p -> ask p [ set visited? false]]
-
-  foreach fish-patches [ p -> ask p [
-    ask one-of neighbors with [in-boundary?] [
-      set zero-to-four zero-to-four + [zero-to-four] of myself
-      set five-to-nine five-to-nine + [five-to-nine] of myself
-      set ten-to-fourteen ten-to-fourteen + [ten-to-fourteen] of myself
-      set fifteen-to-nineteen fifteen-to-nineteen + [fifteen-to-nineteen] of myself
-      set twenty-to-twenty-four twenty-to-twenty-four + [twenty-to-twenty-four] of myself
-      set twenty-five-to-twenty-nine twenty-five-to-twenty-nine + [twenty-five-to-twenty-nine] of myself
-      set total-fish total-fish + [total-fish] of myself
-
-      if not visited? [
-        set visited? true
-        set new-fish-patches lput self new-fish-patches
-      ]
-    ]
     set zero-to-four 0
     set five-to-nine 0
     set ten-to-fourteen 0
     set fifteen-to-nineteen 0
     set twenty-to-twenty-four 0
     set twenty-five-to-twenty-nine 0
-    set total-fish 0
+    ]
   ]
-  ]
-
-
   set fish-patches new-fish-patches
 
 end
-
 
 
 ; --------------------- FISH LIFECYCLE PROCEDURES --------------
@@ -627,45 +552,6 @@ to age-up
 end
 
 
-;; TESTING WITH MIGRATE-2
-;to age-up
-;  foreach fish-patches [ p -> ask p [
-;
-;    ; the thirty year old fish die
-;    set twenty-five-to-twenty-nine ((floor (twenty-five-to-twenty-nine / 5)) * 4)
-;    ; the twenty-four year old fish age up to the twenty-five-to-twenty-nine age group
-;    set twenty-five-to-twenty-nine (twenty-five-to-twenty-nine + ((floor (twenty-to-twenty-four / 5)) * 4))
-;    set twenty-to-twenty-four ((floor (twenty-to-twenty-four / 5)) * 4)
-;    ; the nineteen year old fish age up to the twenty-to-twenty-four age group
-;    set twenty-to-twenty-four (twenty-to-twenty-four + ((floor (fifteen-to-nineteen / 5)) * 4))
-;    set fifteen-to-nineteen ((floor (fifteen-to-nineteen / 5)) * 4)
-;    ; the fourteen year old fish age up to the fifteen-to-nineteen age group
-;    set fifteen-to-nineteen (fifteen-to-nineteen + ((floor (ten-to-fourteen / 5)) * 4))
-;    set ten-to-fourteen ((floor (ten-to-fourteen / 5)) * 4)
-;    ; the nine year old fish age up to the ten-to-fourteen age group
-;    set ten-to-fourteen (ten-to-fourteen + ((floor (five-to-nine / 5)) * 4))
-;    set five-to-nine ((floor (five-to-nine / 5)) * 4)
-;    ; the four year old fish age up to the ten-to-fourteen age group
-;    set five-to-nine (five-to-nine + ((floor (zero-to-four / 5)) * 4))
-;    set zero-to-four ((floor (zero-to-four / 5)) * 4)
-;    ; new fish are born into the zero-to-four age group
-;    spawn
-;  ]
-;  ]
-;;    ask traveling-patches [
-;;      set total-fish fish-on-patch
-;;    ]
-;
-;
-;  foreach fish-patches [ p -> ask p [
-;    set total-fish fish-on-patch
-;    ]
-;  ]
-;
-;end
-
-
-
 ; Reduces fish population in each age group by the offseason-death-rate to account for natural death that occurs between seasons
 ; Observer context
 to offseason-death
@@ -681,7 +567,6 @@ end
 
 
 ; Adds new fish to the youngest age group based on the number of mature female fish, a set probability, and the number of surviving babies expected
-; CITE THIS SOURCE
 ; Patch context
 to spawn
   set zero-to-four zero-to-four +
@@ -698,33 +583,20 @@ to spawn
 end
 
 
-;Original version
-;Observer context
-to daily-death
+;
+; Original version
+; Observer context
+to two-day-death
   ask traveling-patches with [total-fish > 0][
-    set zero-to-four zero-to-four - (ceiling (daily-death-rate * zero-to-four))
-    set five-to-nine five-to-nine - (ceiling (daily-death-rate * five-to-nine))
-    set ten-to-fourteen ten-to-fourteen - (ceiling (daily-death-rate * ten-to-fourteen))
-    set fifteen-to-nineteen fifteen-to-nineteen - (ceiling (daily-death-rate * fifteen-to-nineteen))
-    set twenty-to-twenty-four twenty-to-twenty-four - (ceiling (daily-death-rate * twenty-to-twenty-four))
-    set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - (ceiling (daily-death-rate * twenty-five-to-twenty-nine))
+    set zero-to-four zero-to-four - (ceiling (two-day-death-rate * zero-to-four))
+    set five-to-nine five-to-nine - (ceiling (two-day-death-rate * five-to-nine))
+    set ten-to-fourteen ten-to-fourteen - (ceiling (two-day-death-rate * ten-to-fourteen))
+    set fifteen-to-nineteen fifteen-to-nineteen - (ceiling (two-day-death-rate * fifteen-to-nineteen))
+    set twenty-to-twenty-four twenty-to-twenty-four - (ceiling (two-day-death-rate * twenty-to-twenty-four))
+    set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - (ceiling (two-day-death-rate * twenty-five-to-twenty-nine))
   ]
 end
 
-
-;; TESTING FOR MIGRATE-2
-;; Observer context
-;to daily-death
-;  foreach fish-patches [ p -> ask p [
-;    set zero-to-four zero-to-four - (ceiling (daily-death-rate * zero-to-four))
-;    set five-to-nine five-to-nine - (ceiling (daily-death-rate * five-to-nine))
-;    set ten-to-fourteen ten-to-fourteen - (ceiling (daily-death-rate * ten-to-fourteen))
-;    set fifteen-to-nineteen fifteen-to-nineteen - (ceiling (daily-death-rate * fifteen-to-nineteen))
-;    set twenty-to-twenty-four twenty-to-twenty-four - (ceiling (daily-death-rate * twenty-to-twenty-four))
-;    set twenty-five-to-twenty-nine twenty-five-to-twenty-nine - (ceiling (daily-death-rate * twenty-five-to-twenty-nine))
-;    ]
-;  ]
-;end
 
 ;-------------------- REPORTERS ----------------
 
@@ -772,7 +644,6 @@ end
 to-report patches-in-window
   report traveling-patches with [pxcor >= min-window and pxcor <= max-window and pycor < 138] ;remove 138
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 210
@@ -883,17 +754,6 @@ year
 1
 11
 
-SWITCH
-89
-96
-192
-129
-profile?
-profile?
-0
-1
--1000
-
 SLIDER
 6
 11
@@ -903,7 +763,7 @@ num-boats
 num-boats
 0
 250
-0.0
+100.0
 1
 1
 NIL
@@ -918,7 +778,7 @@ NJ-min
 NJ-min
 0
 70
-28.0
+0.0
 1
 1
 in
@@ -1110,11 +970,11 @@ SLIDER
 NJ-num
 NJ-num
 0
-5
-5.0
+10
+0.0
+2
 1
-1
-fish/day
+fish/2 days
 HORIZONTAL
 
 SLIDER
@@ -1125,11 +985,11 @@ SLIDER
 NY-num
 NY-num
 0
-5
-5.0
+10
+0.0
+2
 1
-1
-fish/day
+fish/2 days
 HORIZONTAL
 
 SLIDER
@@ -1140,11 +1000,11 @@ SLIDER
 CT-num
 CT-num
 0
-5
+10
 0.0
+2
 1
-1
-fish/day
+fish/2 days
 HORIZONTAL
 
 SLIDER
@@ -1155,11 +1015,11 @@ SLIDER
 RI-num
 RI-num
 0
-5
+10
 0.0
+2
 1
-1
-fish/day
+fish/2 days
 HORIZONTAL
 
 SLIDER
@@ -1170,11 +1030,11 @@ SLIDER
 MA-num
 MA-num
 0
-5
+10
 0.0
+2
 1
-1
-fish/day
+fish/2 days
 HORIZONTAL
 
 SLIDER
@@ -1185,11 +1045,11 @@ SLIDER
 NH-num
 NH-num
 0
-5
+10
 0.0
+2
 1
-1
-fish/day
+fish/2 days
 HORIZONTAL
 
 SLIDER
@@ -1200,11 +1060,11 @@ SLIDER
 ME-num
 ME-num
 0
-5
+10
 0.0
+2
 1
-1
-fish/day
+fish/2 days
 HORIZONTAL
 
 BUTTON
@@ -1365,22 +1225,11 @@ natural-mortality?
 1
 -1000
 
-SWITCH
-88
-137
-192
-170
-speed-up?
-speed-up?
-1
-1
--1000
-
 MONITOR
-28
-270
-117
-315
+100
+110
+189
+155
 NIL
 percent-done
 17
@@ -1399,12 +1248,12 @@ We have neither given nor received unauthorized aid on this assignment. Chloe Jo
 
 This project simulates the effects of state-level fishing regulations (size limits and catch limits) on the Atlantic Striped Bass population. 
 
-This model should be used as an educational tool to understand the effects of overfishing on Striped Bass populations and the importance of regulatory policies.
+This model is intended as an educational tool to understand the effects of overfishing on Striped Bass populations and the impacts of size limit and catch limit regulatory policies.
 
 
 ## HOW IT WORKS
 
-The model simulates 170 days of the Atlantic Striped Bass' northward migration, beginning off the coast of New Jersey in late spring and ending at southern Maine in early fall. Bass population is divided into six age categories (5-9, 10-14,  ) and is a property of the patches. 
+The model simulates 170 days of the Atlantic Striped Bass' northward migration, beginning off the coast of New Jersey in late spring and ending at southern Maine in early fall. Bass population is divided into six age categories (5-9, 10-14, 15-19, 20-24, 25-29 ) and is a property of the patches. 
 
 The initial population (based on approx-init-pop) is normally distributed off the coast of New Jersey to begin the simulation. The population moves northward towards Southern Maine, always remaining in waters within the U.S. maritime boundary (data from NOAA). Boats are initialized (if num-boats is non-zero) to random locations throughout the maritime boundary waters. 
 
@@ -1420,41 +1269,53 @@ The NUM-BOATS slider control the initial number of boats in the model. More boat
 Click MOVE to begin the simulation. The bass population moves begins to move northward, and boat agents move and catch fish from the patch they are on. 
 
 
-The NJ-MIN slider sets the minimum catch size for fish in New Jersey. The NJ-NUM slider sets the maximum number of catches that a boat in New Jersey can make per day, with a catch meaning a certain percentage that a 
+***The NJ-MIN slider sets the minimum catch size for fish in New Jersey. The NJ-NUM slider sets the maximum number of catches that a boat in New Jersey can make per day, with a catch meaning *** 
 
 
 
-## THINGS TO NOTICE
 
+
+## EXPERIMENTAL ANALYSIS
+
+BehaviorSpace experiment. 
+
+Controls- # of seasons to run the model for, # of boats
+Independent: size limits, catch limits
 (suggested things for the user to notice while running the model)
 
-## STOCHASTICITY
+## ODD PRINCIPLES
 
 number of fish upon initialization
 number of fish caught
 movement of fish
 number of fish on the patch that a boat is on 
+movement of boats
+daily death rates
 
 
-## THINGS TO TRY
 
-(suggested things for the user to try to do (move sliders, switches, etc.) with the model)
-
-## EXTENDING THE MODEL
+## KNOWN ISSUES AND FUTURE WORK
 
 (suggested things to add or change in the Code tab to make the model more complicated, detailed, accurate, etc.)
 
-## NETLOGO FEATURES
-
-(interesting or unusual features of NetLogo that the model uses, particularly in the Code tab; or where workarounds were needed for missing features)
-
-## RELATED MODELS
-
-(models in the NetLogo Models Library and elsewhere which are of related interest)
 
 ## CREDITS AND REFERENCES
 
-(a reference to the model's URL on the web if it has one, as well as any other necessary credits, citations, and links)
+Migrate procedure and fish-patches list implementation adapted from sample-migrate.netlogo by Matthew Dickerson. 
+
+“Atlantic States Marine Fisheries Commission.” Atlantic States Marine Fisheries Commission, www.asmfc.org/species/atlantic-striped-bass.
+
+Appelman, M., Godwin, C., Laney, W. “2017 Review of the Atlantic States Marine Fisheries Commission Fishery 	Management Plan for Atlantic Striped Bass (Morone saxatalis).” Atlantic Striped Bass Plan Review Team. http://www.asmfc.org/uploads/file/59f0e976sbfmpreview2017.pdf
+
+Bouknight, Walter. “Striper Facts.” Sunrise Fishing, www.sunrisefishing.net/striper-facts.html.
+
+Bradley, Caitlin E., et al. “Juvenile and Adult Striped Bass Mortality and Distribution in an Unrecovered Coastal Population.” North American Journal of Fisheries Management, vol. 38, 2017, doi:10.1080/02755947.2017.1396270.
+
+Diodati, Paul J., and R. Anne Richards. “Mortality of Striped Bass Hooked and Released in Salt Water.” Transactions of the American Fisheries Society, vol. 125, no. 2, 1996, pp. 300–307., doi:10.1577/1548-8659.
+
+“Spawning Stripers.” Stripers 247, Allcoast Media, LLC, www.stripers247.com/Spawning-Stripers.php.
+
+“Striped Bass.” National Oceanic and Atmospheric Administration, NOAA, Mar. 2017, chesapeakebay.noaa.gov/index.php?option=com_content&view=article&id=96&Itemid=123
 @#$#@#$#@
 default
 true
@@ -1770,6 +1631,75 @@ NetLogo 6.0.2
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
+<experiments>
+  <experiment name="Impact of Fishing Regulations in  NJ" repetitions="2" runMetricsEveryStep="false">
+    <setup>setup</setup>
+    <go>move</go>
+    <exitCondition>day = 80</exitCondition>
+    <metric>fish-population</metric>
+    <enumeratedValueSet variable="RI-num">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="profile?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="NJ-num">
+      <value value="0"/>
+      <value value="2"/>
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="NY-num">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ME-min">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="num-boats">
+      <value value="100"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CT-num">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="NH-num">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="MA-num">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="speed-up?">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="RI-min">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="NJ-min">
+      <value value="0"/>
+      <value value="30"/>
+      <value value="50"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="NY-min">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="natural-mortality?">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="MA-min">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="ME-num">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="approx-init-pop">
+      <value value="10000000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CT-min">
+      <value value="0"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="NH-min">
+      <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+</experiments>
 @#$#@#$#@
 @#$#@#$#@
 default

@@ -3,7 +3,10 @@
 ; CSCI 0390
 ; May 14, 2018
 
-;
+
+;------------------------------BOAT MANAGEMENT PROCEDURES (OBSERVER CONTEXT)-----------------
+
+; Removes all boats from the world
 ; Observer context
 to remove-all-boats
   ask boats [die]
@@ -148,7 +151,7 @@ to add-ME-boat
 end
 
 
-;=========================FISH- PROCEDURES (OBSERVER CONTEXT)===========
+;--------------------------FISHING PROCEDURES BY STATE (OBSERVER CONTEXT)--------------
 
 ; All boats in New Jersey waters fish according to NJ-min and NJ-num limits
 ; Observer context
@@ -558,8 +561,7 @@ to fish-ME
   ]
 end
 
-
-;====================CATCH- PROCEDURES (PATCH CONTEXT) ================
+;-----------------------------CATCHING PROCEDURES BY AGE GROUP (PATCH CONTEXT) -----------------------
 
 ; Transfer a number of fish ages 0-4 from this patch to the boat agent
 ; Number based on catch-probability
